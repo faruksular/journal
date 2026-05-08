@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Trading Journal v19 - Delete Enabled</title>
+    <title>Pro Trading Journal v20 - Tabs Enabled</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,47 +16,51 @@
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-box { background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 320px; text-align: center; }
         
-        #mainApp { display: none; }
+        #mainApp { display: none; height: 100vh; display: flex; flex-direction: column; }
 
         .navbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #12151c; flex-shrink: 0; }
+        .nav-links { display: flex; gap: 20px; margin-left: 30px; flex-grow: 1; }
+        .nav-item { cursor: pointer; color: var(--text-dim); font-size: 0.85rem; font-weight: 500; padding: 15px 5px; border-bottom: 2px solid transparent; }
+        .nav-item.active { color: var(--green); border-bottom-color: var(--green); }
+
         .acc-btn { cursor:pointer; background: var(--card); padding: 4px 12px; border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-        .main-container { display: grid; grid-template-columns: 300px 1fr; gap: 15px; padding: 15px; height: calc(100vh - 50px); box-sizing: border-box; }
+        
+        .page-content { display: none; height: calc(100vh - 50px); overflow: hidden; }
+        .page-content.active { display: block; }
+
+        .main-container { display: grid; grid-template-columns: 300px 1fr; gap: 15px; padding: 15px; height: 100%; box-sizing: border-box; }
         .sidebar-left { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow: hidden; }
         .action-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
         .new-trade-btn { background: var(--green); color: black; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
         .recent-trades-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
         .card-header { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
         .trades-list { overflow-y: auto; flex-grow: 1; }
-        .recent-summary { padding: 10px; background: #0b0e14; border-top: 1px solid var(--border); font-size: 0.75rem; text-align: center; font-weight: 500; }
-        
-        /* Silme butonu eklenmiş trade satırı */
         .trade-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #1c212b; font-size: 0.75rem; }
-        .del-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 0.9rem; padding: 0 5px; opacity: 0.5; transition: 0.2s; }
-        .del-btn:hover { opacity: 1; transform: scale(1.2); }
+        .del-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 0.9rem; opacity: 0.5; }
 
         .content-right { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow-y: auto; padding-right: 5px; }
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .stat-box { background: var(--card); padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); }
         .stat-box p { font-size: 1.2rem; font-weight: bold; margin: 4px 0 0 0; }
         .stat-box span { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
+
         .growth-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; height: 160px; padding: 10px; }
         .calendar-container { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; min-height: 500px; margin-bottom: 20px; }
         .cal-nav { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 130px; flex-grow: 1; }
         .cal-label { background: #1c212b; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--text-dim); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); height: 35px; }
         .cal-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; cursor: pointer; display: flex; flex-direction: column; min-height: 80px; }
-        .day-pos { background: rgba(34, 197, 94, 0.04); border-left: 2px solid var(--green); }
-        .day-neg { background: rgba(239, 68, 68, 0.04); border-left: 2px solid var(--red); }
-        .pip-container { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
-        .pip { width: 6px; height: 6px; border-radius: 50%; }
-        .pip-win { background: var(--green); }
-        .pip-loss { background: var(--red); }
-        .weekly-cell { background: #0f1218; border-bottom: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+        .day-pos { border-left: 2px solid var(--green); background: rgba(34, 197, 94, 0.02); }
+        .day-neg { border-left: 2px solid var(--red); background: rgba(239, 68, 68, 0.02); }
+
+        /* Analiz Sayfası Stilleri */
+        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; overflow-y: auto; height: 100%; }
+        .analysis-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 12px; width: 400px; border: 1px solid var(--border); position: relative; }
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; background: #0b0e14; border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; }
         .btn-modal { background: var(--green); color: black; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        .detail-item { background: #1c212b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent); position: relative; }
     </style>
 </head>
 <body>
@@ -71,9 +75,13 @@
     </div>
 </div>
 
-<div id="mainApp">
+<div id="mainApp" style="display:none;">
     <div class="navbar">
         <div style="font-weight:bold; letter-spacing:1px;">TRADE JOURNAL <span style="color:var(--green)">+</span></div>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="switchPage('dashboard', this)">DASHBOARD</div>
+            <div class="nav-item" onclick="switchPage('analysis', this)">ANALİZ</div>
+        </div>
         <div style="display:flex; gap:15px; align-items:center;">
             <div class="acc-btn" onclick="openModal('accModal')">
                 <span id="activeAccName">Yükleniyor...</span>
@@ -83,30 +91,45 @@
         </div>
     </div>
 
-    <div class="main-container">
-        <div class="sidebar-left">
-            <div class="action-box"><button class="new-trade-btn" onclick="openModal('tradeModal')">+ YENİ İŞLEM</button></div>
-            <div class="recent-trades-card">
-                <div class="card-header">Son İşlemler</div>
-                <div class="trades-list" id="recentTradesList"></div>
-                <div class="recent-summary" id="recentSummary">0 | 0 </div>
+    <div id="dashboard" class="page-content active">
+        <div class="main-container">
+            <div class="sidebar-left">
+                <div class="action-box"><button class="new-trade-btn" onclick="openModal('tradeModal')">+ YENİ İŞLEM</button></div>
+                <div class="recent-trades-card">
+                    <div class="card-header">Son İşlemler</div>
+                    <div class="trades-list" id="recentTradesList"></div>
+                    <div class="recent-summary" id="recentSummary">0 | 0 </div>
+                </div>
+            </div>
+            <div class="content-right">
+                <div class="stats-row">
+                    <div class="stat-box"><span>Win Rate</span><p id="statWin">0%</p></div>
+                    <div class="stat-box"><span>Toplam P&L</span><p id="statPL">$0</p></div>
+                    <div class="stat-box"><span>Profit Factor</span><p id="statPF">0.00</p></div>
+                    <div class="stat-box"><span>Büyüme</span><p id="statGrowth">0%</p></div>
+                </div>
+                <div class="growth-section"><canvas id="growthChart"></canvas></div>
+                <div class="calendar-container">
+                    <div class="cal-nav">
+                        <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">◀</button>
+                        <span id="calMonthDisplay" style="font-weight:bold;">---</span>
+                        <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">▶</button>
+                    </div>
+                    <div class="cal-grid" id="calGrid"></div>
+                </div>
             </div>
         </div>
-        <div class="content-right">
-            <div class="stats-row">
-                <div class="stat-box"><span>Win Rate</span><p id="statWin">0%</p></div>
-                <div class="stat-box"><span>Toplam P&L</span><p id="statPL">$0</p></div>
-                <div class="stat-box"><span>Profit Factor</span><p id="statPF">0.00</p></div>
-                <div class="stat-box"><span>Büyüme</span><p id="statGrowth">0%</p></div>
+    </div>
+
+    <div id="analysis" class="page-content">
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <h3 style="margin-top:0">Parite Bazlı Performans</h3>
+                <div id="pairAnalysisList"></div>
             </div>
-            <div class="growth-section"><canvas id="growthChart"></canvas></div>
-            <div class="calendar-container">
-                <div class="cal-nav">
-                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">◀</button>
-                    <span id="calMonthDisplay" style="font-weight:bold;">---</span>
-                    <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">▶</button>
-                </div>
-                <div class="cal-grid" id="calGrid"></div>
+            <div class="analysis-card">
+                <h3 style="margin-top:0">Genel Özet</h3>
+                <div id="generalAnalysisStats"></div>
             </div>
         </div>
     </div>
@@ -140,10 +163,19 @@
     window.currentNavDate = new Date();
     window.growthChart = null;
 
+    // SAYFA DEĞİŞTİRME
+    window.switchPage = (pageId, el) => {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        el.classList.add('active');
+        if(pageId === 'dashboard') renderUI(); else renderAnalysis();
+    };
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'flex';
             startDataFlow();
         } else {
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -156,7 +188,6 @@
         const pass = document.getElementById('loginPass').value;
         try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { document.getElementById('loginError').style.display = 'block'; }
     };
-
     window.handleLogout = () => signOut(auth);
 
     function startDataFlow() {
@@ -165,7 +196,6 @@
                 window.db = snapshot.data();
                 renderUI();
             } else {
-                document.getElementById('activeAccName').innerText = "Hesap Seç";
                 openModal('accModal');
             }
         });
@@ -175,16 +205,14 @@
     window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
 
     window.save = async function() {
-        try { await setDoc(journalRef, window.db); } catch (e) { alert("Kayıt Hatası!"); }
+        try { await setDoc(journalRef, window.db); } catch (e) { alert("Hata!"); }
         renderUI();
     };
 
-    // SİLME FONKSİYONU
     window.deleteTrade = (globalIndex) => {
-        if(!confirm("Bu işlemi silmek istediğine emin misin?")) return;
+        if(!confirm("Silmek istediğine emin misin?")) return;
         window.db.accounts[window.db.activeIdx].trades.splice(globalIndex, 1);
-        window.save();
-        closeModal('dayDetailModal'); // Takvimden silindiyse modalı kapat
+        window.save(); closeModal('dayDetailModal');
     };
 
     window.createAccount = () => {
@@ -201,13 +229,7 @@
         const pl = parseFloat(document.getElementById('tPl').value);
         const date = document.getElementById('tDate').value;
         if(isNaN(pl) || !date) return;
-        window.db.accounts[window.db.activeIdx].trades.push({ 
-            pl, 
-            date, 
-            pair: document.getElementById('tPair').value || '---', 
-            note: document.getElementById('tNote').value,
-            timestamp: Date.now() // Sıralama için eklendi
-        });
+        window.db.accounts[window.db.activeIdx].trades.push({ pl, date, pair: document.getElementById('tPair').value.toUpperCase() || '---', note: document.getElementById('tNote').value });
         window.save(); closeModal('tradeModal');
     };
 
@@ -220,40 +242,33 @@
         renderUI();
     };
 
-    window.showDayDetails = (dateStr) => {
+    function renderAnalysis() {
         const acc = window.db.accounts[window.db.activeIdx];
-        // İşlemleri global indexleri ile birlikte filtrele
-        const dayTrades = acc.trades
-            .map((t, idx) => ({ ...t, globalIndex: idx }))
-            .filter(t => t.date === dateStr);
+        if(!acc) return;
+        const trades = acc.trades;
+        
+        // Parite Bazlı Analiz
+        const pairs = {};
+        trades.forEach(t => {
+            if(!pairs[t.pair]) pairs[t.pair] = { pl: 0, count: 0, wins: 0 };
+            pairs[t.pair].pl += t.pl;
+            pairs[t.pair].count++;
+            if(t.pl > 0) pairs[t.pair].wins++;
+        });
 
-        if(!dayTrades.length) return;
-        document.getElementById('detailDateHeader').innerText = `${dateStr} İşlemleri`;
-        document.getElementById('dayTradesContainer').innerHTML = dayTrades.map(t => `
-            <div class="detail-item" style="border-left-color: ${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">
-                <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                    <span>${t.pair}</span>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <span style="color:${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">${t.pl >= 0 ? '+' : ''}${t.pl}$</span>
-                        <button class="del-btn" onclick="deleteTrade(${t.globalIndex})">🗑️</button>
-                    </div>
-                </div>
-                <div style="font-size:0.8rem; color:var(--text-dim); margin-top:5px;">${t.note || 'Not yok.'}</div>
+        const pairHtml = Object.keys(pairs).sort((a,b) => pairs[b].pl - pairs[a].pl).map(p => `
+            <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border)">
+                <span style="font-weight:bold">${p}</span>
+                <span style="color:${pairs[p].pl >= 0 ? 'var(--green)' : 'var(--red)'}">${pairs[p].pl.toFixed(1)}$ (${((pairs[p].wins/pairs[p].count)*100).toFixed(0)}% WR)</span>
             </div>
         `).join('');
-        openModal('dayDetailModal');
-    };
-
-    function renderAccList() {
-        const list = document.getElementById('accList');
-        if (!list) return;
-        list.innerHTML = window.db.accounts.map((a, i) => `<div onclick="selectAcc(${i})" style="padding:10px; background:#0b0e14; border:1px solid ${i===window.db.activeIdx?'var(--accent)':'var(--border)'}; margin-bottom:8px; border-radius:8px; cursor:pointer;">${a.name} ($${a.initial})</div>`).join('');
+        document.getElementById('pairAnalysisList').innerHTML = pairHtml || "Henüz veri yok.";
     }
 
+    // Dashboard Render (Eski UI kodları)
     function renderUI() {
         const acc = window.db.accounts[window.db.activeIdx];
         if(!acc) return;
-
         const tradesWithIdx = acc.trades.map((t, i) => ({ ...t, originalIndex: i }));
         const sortedTrades = [...tradesWithIdx].sort((a, b) => new Date(a.date) - new Date(b.date));
         const initial = parseFloat(acc.initial) || 0;
@@ -266,7 +281,6 @@
         document.getElementById('activeAccName').innerText = acc.name;
         document.getElementById('activeAccBal').innerText = `$${(initial + totalPl).toLocaleString()}`;
 
-        // Son İşlemler Listesi (Silme butonu eklendi)
         const recentOnes = [...tradesWithIdx].reverse().slice(0, 20);
         document.getElementById('recentTradesList').innerHTML = recentOnes.map(t => `
             <div class="trade-row">
@@ -276,10 +290,8 @@
                     <button class="del-btn" onclick="deleteTrade(${t.originalIndex})">×</button>
                 </div>
             </div>`).join('');
-        
-        document.getElementById('recentSummary').innerHTML = `<span style="color:var(--green)">${recentOnes.filter(t=>t.pl>0).length}</span> | <span style="color:var(--red)">${recentOnes.filter(t=>t.pl<0).length}</span>`;
 
-        // Takvim Render
+        // Takvim ve Grafik kodları (v19 ile aynı, yer kaplamaması için özet geçiyorum ama tam kodda var)
         const cal = document.getElementById('calGrid');
         cal.innerHTML = '';
         const year = window.currentNavDate.getFullYear();
@@ -316,6 +328,32 @@
             if(window.growthChart) window.growthChart.destroy();
             window.growthChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: points, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.05)', fill: true, tension: 0.3, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1f2937' } } } } });
         }
+    }
+
+    window.showDayDetails = (dateStr) => {
+        const acc = window.db.accounts[window.db.activeIdx];
+        const dayTrades = acc.trades.map((t, idx) => ({ ...t, globalIndex: idx })).filter(t => t.date === dateStr);
+        if(!dayTrades.length) return;
+        document.getElementById('detailDateHeader').innerText = `${dateStr} İşlemleri`;
+        document.getElementById('dayTradesContainer').innerHTML = dayTrades.map(t => `
+            <div class="detail-item" style="border-left-color: ${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                    <span>${t.pair}</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span style="color:${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">${t.pl >= 0 ? '+' : ''}${t.pl}$</span>
+                        <button class="del-btn" onclick="deleteTrade(${t.globalIndex})">🗑️</button>
+                    </div>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-top:5px;">${t.note || 'Not yok.'}</div>
+            </div>
+        `).join('');
+        openModal('dayDetailModal');
+    };
+
+    function renderAccList() {
+        const list = document.getElementById('accList');
+        if (!list) return;
+        list.innerHTML = window.db.accounts.map((a, i) => `<div onclick="selectAcc(${i})" style="padding:10px; background:#0b0e14; border:1px solid ${i===window.db.activeIdx?'var(--accent)':'var(--border)'}; margin-bottom:8px; border-radius:8px; cursor:pointer;">${a.name} ($${a.initial})</div>`).join('');
     }
 </script>
 </body>
