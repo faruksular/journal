@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Trading Journal v18 - Firebase</title>
+    <title>Pro Trading Journal v18 - Secure</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -12,6 +12,22 @@
             --text: #ffffff; --text-dim: #848e9c; --border: #2a2e39; --accent: #3b82f6;
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; }
+        
+        /* --- LOGIN OVERLAY STİLLERİ --- */
+        #loginOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg); z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        .login-box { 
+            background: var(--card); padding: 30px; border-radius: 12px; 
+            border: 1px solid var(--border); width: 320px; text-align: center; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        /* ------------------------------ */
+
+        #mainApp { display: none; } /* Giriş yapmadan uygulama görünmez */
+
         .navbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #12151c; flex-shrink: 0; }
         .acc-btn { cursor:pointer; background: var(--card); padding: 4px 12px; border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
         .main-container { display: grid; grid-template-columns: 300px 1fr; gap: 15px; padding: 15px; height: calc(100vh - 50px); box-sizing: border-box; }
@@ -30,11 +46,9 @@
         .stat-box span { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
         .growth-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; height: 160px; padding: 10px; }
         .calendar-container { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; min-height: 500px; margin-bottom: 20px; }
-        .cal-nav { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 130px; flex-grow: 1; }
         .cal-label { background: #1c212b; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--text-dim); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); height: 35px; }
         .cal-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; cursor: pointer; display: flex; flex-direction: column; min-height: 80px; }
-        .cal-cell:hover { background: #1e222d; }
         .day-pos { background: rgba(34, 197, 94, 0.04); border-left: 2px solid var(--green); }
         .day-neg { background: rgba(239, 68, 68, 0.04); border-left: 2px solid var(--red); }
         .pip-container { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; }
@@ -42,7 +56,6 @@
         .pip-win { background: var(--green); }
         .pip-loss { background: var(--red); }
         .weekly-cell { background: #0f1218; border-bottom: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-        .weekly-trades-text { font-size: 0.65rem; color: var(--text-dim); margin-top: 4px; }
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center; }
         .modal-content { background: var(--card); padding: 25px; border-radius: 12px; width: 400px; border: 1px solid var(--border); position: relative; }
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; background: #0b0e14; border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; }
@@ -52,39 +65,53 @@
 </head>
 <body>
 
-<div class="navbar">
-    <div style="font-weight:bold; letter-spacing:1px;">TRADE JOURNAL <span style="color:var(--green)">+</span></div>
-    <div class="acc-btn" onclick="openModal('accModal')">
-        <span id="activeAccName">Yükleniyor...</span>
-        <span id="activeAccBal" style="color:var(--green); font-weight:bold;">$0</span>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2 style="margin-top:0; color:var(--green)">Giriş Yap</h2>
+        <input type="email" id="loginEmail" placeholder="E-posta">
+        <input type="password" id="loginPass" placeholder="Şifre">
+        <button class="btn-modal" onclick="handleLogin()">GİRİŞ</button>
+        <p id="loginError" style="color:var(--red); font-size:0.8rem; margin-top:10px; display:none;">Hatalı Giriş!</p>
     </div>
 </div>
 
-<div class="main-container">
-    <div class="sidebar-left">
-        <div class="action-box"><button class="new-trade-btn" onclick="openModal('tradeModal')">+ YENİ İŞLEM</button></div>
-        <div class="recent-trades-card">
-            <div class="card-header">Son İşlemler</div>
-            <div class="trades-list" id="recentTradesList"></div>
-            <div class="recent-summary" id="recentSummary">0 | 0 </div>
+<div id="mainApp">
+    <div class="navbar">
+        <div style="font-weight:bold; letter-spacing:1px;">TRADE JOURNAL <span style="color:var(--green)">+</span></div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <div class="acc-btn" onclick="openModal('accModal')">
+                <span id="activeAccName">Yükleniyor...</span>
+                <span id="activeAccBal" style="color:var(--green); font-weight:bold;">$0</span>
+            </div>
+            <button onclick="handleLogout()" style="background:none; border:none; color:var(--red); cursor:pointer; font-size:0.85rem;">ÇIKIŞ</button>
         </div>
     </div>
 
-    <div class="content-right">
-        <div class="stats-row">
-            <div class="stat-box"><span>Win Rate</span><p id="statWin">0%</p></div>
-            <div class="stat-box"><span>Toplam P&L</span><p id="statPL">$0</p></div>
-            <div class="stat-box"><span>Profit Factor</span><p id="statPF">0.00</p></div>
-            <div class="stat-box"><span>Büyüme</span><p id="statGrowth">0%</p></div>
-        </div>
-        <div class="growth-section"><canvas id="growthChart"></canvas></div>
-        <div class="calendar-container">
-            <div class="cal-nav">
-                <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">◀</button>
-                <span id="calMonthDisplay" style="font-weight:bold;">---</span>
-                <button id="nextMonthBtn" onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">▶</button>
+    <div class="main-container">
+        <div class="sidebar-left">
+            <div class="action-box"><button class="new-trade-btn" onclick="openModal('tradeModal')">+ YENİ İŞLEM</button></div>
+            <div class="recent-trades-card">
+                <div class="card-header">Son İşlemler</div>
+                <div class="trades-list" id="recentTradesList"></div>
+                <div class="recent-summary" id="recentSummary">0 | 0 </div>
             </div>
-            <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div class="content-right">
+            <div class="stats-row">
+                <div class="stat-box"><span>Win Rate</span><p id="statWin">0%</p></div>
+                <div class="stat-box"><span>Toplam P&L</span><p id="statPL">$0</p></div>
+                <div class="stat-box"><span>Profit Factor</span><p id="statPF">0.00</p></div>
+                <div class="stat-box"><span>Büyüme</span><p id="statGrowth">0%</p></div>
+            </div>
+            <div class="growth-section"><canvas id="growthChart"></canvas></div>
+            <div class="calendar-container">
+                <div class="cal-nav">
+                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">◀</button>
+                    <span id="calMonthDisplay" style="font-weight:bold;">---</span>
+                    <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">▶</button>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -96,6 +123,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDoN1KtmGJs4MQfpMXaUrg-XUhDOww8e0c",
@@ -109,28 +137,55 @@
 
     const app = initializeApp(firebaseConfig);
     const cloudDB = getFirestore(app);
+    const auth = getAuth(app);
     const journalRef = doc(cloudDB, "users", "faruk_trader");
 
     window.db = { accounts: [], activeIdx: -1 };
     window.currentNavDate = new Date();
     window.growthChart = null;
 
-    onSnapshot(journalRef, (snapshot) => {
-        if (snapshot.exists()) {
-            window.db = snapshot.data();
-            renderUI();
+    // OTURUM YÖNETİMİ
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            startDataFlow();
         } else {
-            document.getElementById('activeAccName').innerText = "Hesap Seç";
-            openModal('accModal');
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
         }
     });
 
+    window.handleLogin = async () => {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    };
+
+    window.handleLogout = () => signOut(auth);
+
+    function startDataFlow() {
+        onSnapshot(journalRef, (snapshot) => {
+            if (snapshot.exists()) {
+                window.db = snapshot.data();
+                renderUI();
+            } else {
+                document.getElementById('activeAccName').innerText = "Hesap Seç";
+                openModal('accModal');
+            }
+        });
+    }
+
+    // Modal ve Kayıt Fonksiyonları
     window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; if(id==='accModal') renderAccList(); };
     window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
 
     window.save = async function() {
-        localStorage.setItem('tradeAppV18', JSON.stringify(window.db));
-        try { await setDoc(journalRef, window.db); } catch (e) { console.error("Cloud Save Error:", e); }
+        try { await setDoc(journalRef, window.db); } catch (e) { alert("Kayıt Hatası! Yetkiniz olmayabilir."); }
         renderUI();
     };
 
@@ -153,7 +208,6 @@
     };
 
     window.selectAcc = (i) => { window.db.activeIdx = i; window.save(); closeModal('accModal'); };
-
     window.changeMonth = (dir) => {
         let target = new Date(window.currentNavDate);
         target.setMonth(target.getMonth() + dir);
@@ -176,42 +230,27 @@
         openModal('dayDetailModal');
     };
 
-    window.renderAccList = () => {
+    function renderAccList() {
         const list = document.getElementById('accList');
         if (!list) return;
         list.innerHTML = window.db.accounts.map((a, i) => `<div onclick="selectAcc(${i})" style="padding:10px; background:#0b0e14; border:1px solid ${i===window.db.activeIdx?'var(--accent)':'var(--border)'}; margin-bottom:8px; border-radius:8px; cursor:pointer;">${a.name} ($${a.initial})</div>`).join('');
-    };
+    }
 
-    window.renderUI = () => {
+    function renderUI() {
         const acc = window.db.accounts[window.db.activeIdx];
         if(!acc) return;
 
-        // --- KRONOLOJİK SIRALAMA ---
         const sortedTrades = [...acc.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
-        
         const initial = parseFloat(acc.initial) || 0;
         const totalPl = sortedTrades.reduce((s,t) => s + parseFloat(t.pl), 0);
 
-        const wins = sortedTrades.filter(t => t.pl > 0).length;
-        const grossProfit = sortedTrades.filter(t => t.pl > 0).reduce((s,t) => s + t.pl, 0);
-        const grossLoss = Math.abs(sortedTrades.filter(t => t.pl < 0).reduce((s,t) => s + t.pl, 0));
-
-        document.getElementById('statWin').innerText = sortedTrades.length ? `${((wins/sortedTrades.length)*100).toFixed(1)}%` : '0%';
+        document.getElementById('statWin').innerText = sortedTrades.length ? `${((sortedTrades.filter(t => t.pl > 0).length/sortedTrades.length)*100).toFixed(1)}%` : '0%';
         document.getElementById('statPL').innerText = `$${totalPl.toLocaleString()}`;
         document.getElementById('statPL').style.color = totalPl >= 0 ? 'var(--green)' : 'var(--red)';
         document.getElementById('statGrowth').innerText = `%${initial === 0 ? 0 : ((totalPl / initial) * 100).toFixed(2)}`;
-        document.getElementById('statPF').innerText = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit.toFixed(2);
         document.getElementById('activeAccName').innerText = acc.name;
         document.getElementById('activeAccBal').innerText = `$${(initial + totalPl).toLocaleString()}`;
 
-        const last20 = [...acc.trades].reverse().slice(0, 20);
-        document.getElementById('recentTradesList').innerHTML = last20.map(t => `<div class="trade-row"><span>${t.pair}</span><span style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</span></div>`).join('');
-        
-        const lastWins = last20.filter(t => t.pl > 0).length;
-        const lastLoss = last20.filter(t => t.pl < 0).length;
-        document.getElementById('recentSummary').innerHTML = `<span style="color:var(--green)">${lastWins} </span> | <span style="color:var(--red)">${lastLoss} </span>`;
-
-        // Calendar
         const cal = document.getElementById('calGrid');
         cal.innerHTML = '';
         const year = window.currentNavDate.getFullYear();
@@ -224,7 +263,7 @@
         let currentDay = 1;
 
         for (let row = 0; row < 6; row++) {
-            let weeklyPl = 0, weeklyTradeCount = 0, hasData = false;
+            let weeklyPl = 0, hasData = false;
             for (let col = 0; col < 7; col++) {
                 const cellIdx = row * 7 + col;
                 if (cellIdx < firstDay || currentDay > daysInMonth) {
@@ -233,33 +272,22 @@
                     const dStr = `${year}-${String(month+1).padStart(2,'0')}-${String(currentDay).padStart(2,'0')}`;
                     const dTrades = acc.trades.filter(t => t.date === dStr);
                     const dSum = dTrades.reduce((s,t) => s + parseFloat(t.pl), 0);
-                    weeklyPl += dSum; weeklyTradeCount += dTrades.length; hasData = true;
+                    weeklyPl += dSum; hasData = true;
                     cal.innerHTML += `<div class="cal-cell ${dTrades.length ? (dSum>=0?'day-pos':'day-neg'):''}" onclick="showDayDetails('${dStr}')"><div style="display:flex; justify-content:space-between; font-size:0.7rem;"><span style="opacity:0.5">${currentDay}</span><span style="font-weight:bold; color:${dSum>=0?'var(--green)':'var(--red)'}">${dTrades.length ? dSum+'$' : ''}</span></div><div class="pip-container">${dTrades.map(t => `<div class="pip ${t.pl>=0?'pip-win':'pip-loss'}"></div>`).join('')}</div></div>`;
                     currentDay++;
                 }
             }
-            cal.innerHTML += hasData ? `<div class="weekly-cell"><div style="font-size:0.85rem; font-weight:bold; color:${weeklyPl>=0?'var(--green)':'var(--red)'}">${weeklyPl.toFixed(1)}$</div><div class="weekly-trades-text">${weeklyTradeCount} Trade</div></div>` : `<div class="weekly-cell"></div>`;
+            cal.innerHTML += hasData ? `<div class="weekly-cell"><div style="font-size:0.85rem; font-weight:bold; color:${weeklyPl>=0?'var(--green)':'var(--red)'}">${weeklyPl.toFixed(1)}$</div></div>` : `<div class="weekly-cell"></div>`;
         }
 
-        // Growth Chart
         const ctx = document.getElementById('growthChart').getContext('2d');
         if (ctx) {
-            let cur = initial;
-            let points = [cur]; 
-            let labels = ['Başlangıç'];
-            sortedTrades.forEach((t) => { 
-                cur += parseFloat(t.pl); 
-                points.push(cur); 
-                labels.push(t.date);
-            });
+            let cur = initial, points = [cur], labels = ['Start'];
+            sortedTrades.forEach((t) => { cur += parseFloat(t.pl); points.push(cur); labels.push(t.date); });
             if(window.growthChart) window.growthChart.destroy();
-            window.growthChart = new Chart(ctx, { 
-                type: 'line', 
-                data: { labels, datasets: [{ data: points, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.05)', fill: true, tension: 0.3, pointRadius: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1f2937' } } } }
-            });
+            window.growthChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ data: points, borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.05)', fill: true, tension: 0.3, pointRadius: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { color: '#1f2937' } } } } });
         }
-    };
+    }
 </script>
 </body>
 </html>
