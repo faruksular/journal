@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Trading Journal v18 - Secure</title>
+    <title>Pro Trading Journal v19 - Delete Enabled</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -13,20 +13,10 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; height: 100vh; overflow: hidden; }
         
-        /* --- LOGIN OVERLAY STİLLERİ --- */
-        #loginOverlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg); z-index: 9999; 
-            display: flex; align-items: center; justify-content: center; 
-        }
-        .login-box { 
-            background: var(--card); padding: 30px; border-radius: 12px; 
-            border: 1px solid var(--border); width: 320px; text-align: center; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        /* ------------------------------ */
-
-        #mainApp { display: none; } /* Giriş yapmadan uygulama görünmez */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: var(--card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); width: 320px; text-align: center; }
+        
+        #mainApp { display: none; }
 
         .navbar { height: 50px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #12151c; flex-shrink: 0; }
         .acc-btn { cursor:pointer; background: var(--card); padding: 4px 12px; border-radius: 15px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
@@ -38,7 +28,12 @@
         .card-header { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.75rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
         .trades-list { overflow-y: auto; flex-grow: 1; }
         .recent-summary { padding: 10px; background: #0b0e14; border-top: 1px solid var(--border); font-size: 0.75rem; text-align: center; font-weight: 500; }
-        .trade-row { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #1c212b; font-size: 0.75rem; }
+        
+        /* Silme butonu eklenmiş trade satırı */
+        .trade-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #1c212b; font-size: 0.75rem; }
+        .del-btn { background: none; border: none; color: var(--red); cursor: pointer; font-size: 0.9rem; padding: 0 5px; opacity: 0.5; transition: 0.2s; }
+        .del-btn:hover { opacity: 1; transform: scale(1.2); }
+
         .content-right { display: flex; flex-direction: column; gap: 15px; height: 100%; overflow-y: auto; padding-right: 5px; }
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .stat-box { background: var(--card); padding: 12px 15px; border-radius: 10px; border: 1px solid var(--border); }
@@ -46,6 +41,7 @@
         .stat-box span { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
         .growth-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; height: 160px; padding: 10px; }
         .calendar-container { background: var(--card); border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; min-height: 500px; margin-bottom: 20px; }
+        .cal-nav { padding: 12px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr) 130px; flex-grow: 1; }
         .cal-label { background: #1c212b; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--text-dim); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); height: 35px; }
         .cal-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; cursor: pointer; display: flex; flex-direction: column; min-height: 80px; }
@@ -60,7 +56,7 @@
         .modal-content { background: var(--card); padding: 25px; border-radius: 12px; width: 400px; border: 1px solid var(--border); position: relative; }
         input, textarea { width: 100%; padding: 10px; margin: 8px 0; background: #0b0e14; border: 1px solid var(--border); color: white; border-radius: 8px; box-sizing: border-box; }
         .btn-modal { background: var(--green); color: black; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        .detail-item { background: #1c212b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent); }
+        .detail-item { background: #1c212b; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--accent); position: relative; }
     </style>
 </head>
 <body>
@@ -144,7 +140,6 @@
     window.currentNavDate = new Date();
     window.growthChart = null;
 
-    // OTURUM YÖNETİMİ
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginOverlay').style.display = 'none';
@@ -159,11 +154,7 @@
     window.handleLogin = async () => {
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) {
-            document.getElementById('loginError').style.display = 'block';
-        }
+        try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { document.getElementById('loginError').style.display = 'block'; }
     };
 
     window.handleLogout = () => signOut(auth);
@@ -180,13 +171,20 @@
         });
     }
 
-    // Modal ve Kayıt Fonksiyonları
     window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; if(id==='accModal') renderAccList(); };
     window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
 
     window.save = async function() {
-        try { await setDoc(journalRef, window.db); } catch (e) { alert("Kayıt Hatası! Yetkiniz olmayabilir."); }
+        try { await setDoc(journalRef, window.db); } catch (e) { alert("Kayıt Hatası!"); }
         renderUI();
+    };
+
+    // SİLME FONKSİYONU
+    window.deleteTrade = (globalIndex) => {
+        if(!confirm("Bu işlemi silmek istediğine emin misin?")) return;
+        window.db.accounts[window.db.activeIdx].trades.splice(globalIndex, 1);
+        window.save();
+        closeModal('dayDetailModal'); // Takvimden silindiyse modalı kapat
     };
 
     window.createAccount = () => {
@@ -203,7 +201,13 @@
         const pl = parseFloat(document.getElementById('tPl').value);
         const date = document.getElementById('tDate').value;
         if(isNaN(pl) || !date) return;
-        window.db.accounts[window.db.activeIdx].trades.push({ pl, date, pair: document.getElementById('tPair').value || '---', note: document.getElementById('tNote').value });
+        window.db.accounts[window.db.activeIdx].trades.push({ 
+            pl, 
+            date, 
+            pair: document.getElementById('tPair').value || '---', 
+            note: document.getElementById('tNote').value,
+            timestamp: Date.now() // Sıralama için eklendi
+        });
         window.save(); closeModal('tradeModal');
     };
 
@@ -218,12 +222,22 @@
 
     window.showDayDetails = (dateStr) => {
         const acc = window.db.accounts[window.db.activeIdx];
-        const dayTrades = acc.trades.filter(t => t.date === dateStr);
+        // İşlemleri global indexleri ile birlikte filtrele
+        const dayTrades = acc.trades
+            .map((t, idx) => ({ ...t, globalIndex: idx }))
+            .filter(t => t.date === dateStr);
+
         if(!dayTrades.length) return;
         document.getElementById('detailDateHeader').innerText = `${dateStr} İşlemleri`;
         document.getElementById('dayTradesContainer').innerHTML = dayTrades.map(t => `
             <div class="detail-item" style="border-left-color: ${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">
-                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>${t.pair}</span><span style="color:${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">${t.pl >= 0 ? '+' : ''}${t.pl}$</span></div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                    <span>${t.pair}</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <span style="color:${t.pl >= 0 ? 'var(--green)' : 'var(--red)'}">${t.pl >= 0 ? '+' : ''}${t.pl}$</span>
+                        <button class="del-btn" onclick="deleteTrade(${t.globalIndex})">🗑️</button>
+                    </div>
+                </div>
                 <div style="font-size:0.8rem; color:var(--text-dim); margin-top:5px;">${t.note || 'Not yok.'}</div>
             </div>
         `).join('');
@@ -240,7 +254,8 @@
         const acc = window.db.accounts[window.db.activeIdx];
         if(!acc) return;
 
-        const sortedTrades = [...acc.trades].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const tradesWithIdx = acc.trades.map((t, i) => ({ ...t, originalIndex: i }));
+        const sortedTrades = [...tradesWithIdx].sort((a, b) => new Date(a.date) - new Date(b.date));
         const initial = parseFloat(acc.initial) || 0;
         const totalPl = sortedTrades.reduce((s,t) => s + parseFloat(t.pl), 0);
 
@@ -251,6 +266,20 @@
         document.getElementById('activeAccName').innerText = acc.name;
         document.getElementById('activeAccBal').innerText = `$${(initial + totalPl).toLocaleString()}`;
 
+        // Son İşlemler Listesi (Silme butonu eklendi)
+        const recentOnes = [...tradesWithIdx].reverse().slice(0, 20);
+        document.getElementById('recentTradesList').innerHTML = recentOnes.map(t => `
+            <div class="trade-row">
+                <span>${t.pair}</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</span>
+                    <button class="del-btn" onclick="deleteTrade(${t.originalIndex})">×</button>
+                </div>
+            </div>`).join('');
+        
+        document.getElementById('recentSummary').innerHTML = `<span style="color:var(--green)">${recentOnes.filter(t=>t.pl>0).length}</span> | <span style="color:var(--red)">${recentOnes.filter(t=>t.pl<0).length}</span>`;
+
+        // Takvim Render
         const cal = document.getElementById('calGrid');
         cal.innerHTML = '';
         const year = window.currentNavDate.getFullYear();
