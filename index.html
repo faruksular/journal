@@ -210,7 +210,6 @@
     };
 
     window.deleteTrade = (globalIndex) => {
-        if(!confirm("Silmek istediğine emin misin?")) return;
         window.db.accounts[window.db.activeIdx].trades.splice(globalIndex, 1);
         window.save(); closeModal('dayDetailModal');
     };
