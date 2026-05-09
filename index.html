@@ -551,7 +551,6 @@
     journalRef.onSnapshot((docSnap) => {
         document.getElementById('loadingOverlay').style.display = 'none';
         
-        // Compat API'de docSnap.exists bir metot değil, direkt değerdir.
         if (docSnap.exists) {
             const data = docSnap.data();
             accounts = data.accounts || [];
@@ -593,6 +592,10 @@
 
     async function saveToCloud() {
         setSyncStatus('saving');
+        
+        // LOKAL ARAYÜZÜ ANINDA GÜNCELLE (OPTIMISTIC UPDATE)
+        renderCurrentView();
+
         const data = { accounts, trades, dailyNotes, playbookRules, activeAccountId, updatedAt: new Date().toISOString() };
         localStorage.setItem('tradezellaV1', JSON.stringify(data));
         try {
