@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeZella Pro - Firebase Sync</title>
-    <!-- Firebase Compat SDKs -->
+    <title>TradeZella Pro - Firebase Auth & Sync</title>
+    <!-- Firebase Compat SDKs (Auth Eklendi) -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -140,20 +141,40 @@
         select, input[type="text"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         .btn-modal { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .acc-table-btn { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1rem; }
-        /* FIREBASE STATUS BAR */
-        .firebase-status { padding: 6px 20px; background: var(--sidebar-bg); border-top: 1px solid #2b2b40; font-size: 0.7rem; color: #a2a3b7; display: flex; align-items: center; gap: 8px; }
+        
+        /* LOGIN & LOADING OVERLAYS */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--sidebar-bg); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 35px 30px; border-radius: 12px; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center; }
+        .login-box h2 { margin-top: 0; margin-bottom: 25px; font-weight: 800; color: var(--text-main); letter-spacing: 1px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        .login-box button { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .login-box button:hover { background: #4f46e5; }
+        #loginError { color: var(--red); font-size: 0.8rem; font-weight: 600; margin-bottom: 15px; display: none; background: #fff1f2; padding: 8px; border-radius: 6px;}
+        
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,30,45,0.97); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: white; }
         .loading-spinner { width: 40px; height: 40px; border: 3px solid #2b2b40; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .firebase-status { padding: 6px 20px; background: var(--sidebar-bg); border-top: 1px solid #2b2b40; font-size: 0.7rem; color: #a2a3b7; display: flex; align-items: center; gap: 8px; }
     </style>
 </head>
 <body>
 
+<!-- Login Overlay -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>TRADEZELLA</h2>
+        <div id="loginError"></div>
+        <input type="email" id="loginEmail" placeholder="Email Address">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="loginWithFirebase()">Sign In</button>
+    </div>
+</div>
+
 <!-- Loading Overlay -->
-<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
     <div class="loading-spinner"></div>
     <div style="font-weight:600; font-size:0.9rem;">Connecting to Firebase...</div>
-    <div style="font-size:0.75rem; color:#a2a3b7;" id="loadingMsg">Initializing cloud sync</div>
+    <div style="font-size:0.75rem; color:#a2a3b7;" id="loadingMsg">Fetching your data</div>
 </div>
 
 <div class="sidebar">
@@ -198,7 +219,9 @@
                 <div class="acc-dropdown-header">SWITCH ACCOUNT</div>
                 <div id="accountListContainer"></div>
                 <div style="border-top:1px solid var(--border); padding: 10px;">
-                    <button onclick="openAccountManager()" style="width:100%; padding:8px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">⚙️ Account Manager</button>
+                    <button onclick="openAccountManager()" style="width:100%; padding:8px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main); margin-bottom:8px;">⚙️ Account Manager</button>
+                    <!-- LOGOUT BUTTON -->
+                    <button onclick="logoutFirebase()" style="width:100%; padding:8px; background:#fff1f2; color:var(--red); border:1px solid #fecdd3; border-radius:6px; cursor:pointer; font-weight:600;">🚪 Logout</button>
                 </div>
             </div>
         </div>
@@ -524,7 +547,7 @@
         'Setup':   { bg: '#ecfdf5', color: '#10b981', border: '#a7f3d0' },
     };
 
-    // ====================== FIREBASE SYNC (COMPAT) ======================
+    // ====================== FIREBASE SYNC (COMPAT + AUTH) ======================
     const firebaseConfig = {
         apiKey: "AIzaSyDoN1KtmGJs4MQfpMXaUrg-XUhDOww8e0c",
         authDomain: "trade-f9de0.firebaseapp.com",
@@ -536,7 +559,9 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth(); // AUTH EKLENDI
     const journalRef = db.collection("users").doc("faruk_trader");
+    let unsubscribeSnapshot = null;
 
     function setSyncStatus(status) {
         const dot = document.getElementById('syncDot');
@@ -548,56 +573,80 @@
         else { txt.innerText = '🔄 Connecting...'; }
     }
 
-    journalRef.onSnapshot((docSnap) => {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        
-        if (docSnap.exists) {
-            const data = docSnap.data();
-            accounts = data.accounts || [];
-            trades = data.trades || [];
-            dailyNotes = data.dailyNotes || {};
-            playbookRules = data.playbookRules || [];
-            activeAccountId = data.activeAccountId || (accounts.length ? accounts[0].id : null);
-            setSyncStatus('synced');
-            renderCurrentView();
+    // AUTH LISTENER
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // Giriş Başarılı
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            startDatabaseSync(); // Veri çekmeyi başlat
         } else {
-            // İlk Kurulum
-            accounts = [{ id: Date.now(), name: "Main Account", type: "Live Account", balance: 10000 }];
-            activeAccountId = accounts[0].id;
-            trades = []; dailyNotes = {}; playbookRules = [];
-            saveToCloud();
+            // Giriş Yapılmamış
+            if (unsubscribeSnapshot) unsubscribeSnapshot(); // Senkronizasyonu durdur
+            document.getElementById('loadingOverlay').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = 'flex'; // Login Ekranını göster
         }
-    }, (error) => {
-        console.error("Firebase error:", error);
-        document.getElementById('loadingMsg').innerText = 'Using local data (offline mode)';
-        setSyncStatus('error');
-        const local = localStorage.getItem('tradezellaV1');
-        if (local) {
-            try {
-                const d = JSON.parse(local);
-                accounts = d.accounts || [];
-                trades = d.trades || [];
-                dailyNotes = d.dailyNotes || {};
-                playbookRules = d.playbookRules || [];
-                activeAccountId = d.activeAccountId || (accounts.length ? accounts[0].id : null);
-            } catch(e) {}
-        }
-        if (!accounts.length) {
-            accounts = [{ id: Date.now(), name: "Main Account", type: "Live Account", balance: 10000 }];
-            activeAccountId = accounts[0].id;
-        }
-        document.getElementById('loadingOverlay').style.display = 'none';
-        renderCurrentView();
     });
 
+    // LOGIN & LOGOUT FONKSİYONLARI
+    window.loginWithFirebase = function() {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPassword').value;
+        const errDiv = document.getElementById('loginError');
+        errDiv.style.display = 'none';
+        
+        if(!email || !pass) { errDiv.innerText = "Please fill in all fields."; errDiv.style.display = 'block'; return; }
+        
+        auth.signInWithEmailAndPassword(email, pass).catch(error => {
+            errDiv.innerText = error.message;
+            errDiv.style.display = 'block';
+        });
+    };
+
+    window.logoutFirebase = function() {
+        auth.signOut();
+        toggleAccountMenu();
+    };
+
+    // VERİ SENKRONİZASYONU BAŞLATMA
+    function startDatabaseSync() {
+        if(unsubscribeSnapshot) unsubscribeSnapshot();
+        
+        unsubscribeSnapshot = journalRef.onSnapshot((docSnap) => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (docSnap.exists) {
+                const data = docSnap.data();
+                accounts = data.accounts || [];
+                trades = data.trades || [];
+                dailyNotes = data.dailyNotes || {};
+                playbookRules = data.playbookRules || [];
+                activeAccountId = data.activeAccountId || (accounts.length ? accounts[0].id : null);
+                setSyncStatus('synced');
+                renderCurrentView();
+            } else {
+                accounts = [{ id: Date.now(), name: "Main Account", type: "Live Account", balance: 10000 }];
+                activeAccountId = accounts[0].id;
+                trades = []; dailyNotes = {}; playbookRules = [];
+                saveToCloud();
+            }
+        }, (error) => {
+            console.error("Firebase error:", error);
+            setSyncStatus('error');
+        });
+    }
+
     async function saveToCloud() {
+        if (!auth.currentUser) return; // Kullanıcı giriş yapmadıysa veritabanına yazmaya çalışma
+
         setSyncStatus('saving');
         
         // LOKAL ARAYÜZÜ ANINDA GÜNCELLE (OPTIMISTIC UPDATE)
         renderCurrentView();
 
         const data = { accounts, trades, dailyNotes, playbookRules, activeAccountId, updatedAt: new Date().toISOString() };
-        localStorage.setItem('tradezellaV1', JSON.stringify(data));
+        localStorage.setItem('tradezellaV1', JSON.stringify(data)); // Ne olur ne olmaz lokale yedek
+        
         try {
             await journalRef.set(data);
             setSyncStatus('synced');
@@ -888,7 +937,7 @@
     function updateUI() {
         updateHeaderBalanceOnly();
         const cTrades=getCurrentTrades();
-        document.getElementById('tradeTable').querySelector('tbody').innerHTML=cTrades.slice().reverse().slice(0,10).map(t=>`<tr><td>${t.date}</td><td>${t.pair}</td><td>${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</td></tr>`).join('');
+        document.getElementById('tradeTable').querySelector('tbody').innerHTML=cTrades.slice().reverse().slice(0,10).map(t=>`<tr class="selectable-trade" onclick="showDayDetails('${t.date}')"><td>${t.date}</td><td>${t.pair}</td><td>${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</td></tr>`).join('');
         const totalPL=cTrades.reduce((s,t)=>s+t.pl,0);
         const plEl=document.getElementById('statPL'); plEl.innerText=`$${totalPL.toLocaleString()}`; plEl.style.color=totalPL>=0?'var(--green)':'var(--red)';
         const wins=cTrades.filter(t=>t.pl>0), losses=cTrades.filter(t=>t.pl<0), be=cTrades.filter(t=>t.pl===0);
