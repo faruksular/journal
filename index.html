@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeZella UI v53 - With Playbook</title>
+    <title>TradeZella Pro - Firebase Sync</title>
     <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -17,14 +17,17 @@
         }
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 240px; background: var(--sidebar-bg); color: white; display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
-        .logo { padding: 0 25px 30px; font-weight: 800; font-size: 1.2rem; color: #fff; letter-spacing: 1px; }
+        .logo { padding: 0 25px 30px; font-weight: 800; font-size: 1.2rem; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; transition: background 0.3s; }
+        .sync-dot.synced { background: var(--green); }
+        .sync-dot.error { background: var(--red); }
         .add-trade-btn { margin: 0 20px 25px; background: var(--accent); color: white; border: none; padding: 12px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .nav-menu { flex-grow: 1; list-style: none; padding: 0; margin: 0; }
         .nav-item { padding: 12px 25px; display: flex; align-items: center; gap: 12px; color: #a2a3b7; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
         .nav-item:hover { color: white; }
         .nav-item.active { background: #2b2b40; color: white; border-left: 4px solid var(--accent); padding-left: 21px; }
         .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh; }
-        .header { height: 70px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; flex-shrink: 0;}
+        .header { height: 70px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; flex-shrink: 0; }
         .header-account-btn { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--accent); padding: 6px 12px; border-radius: 8px; transition: 0.2s; user-select: none; }
         .header-account-btn:hover { background: #f1f5f9; }
         .header-bal-badge { background: #f1f5f9; color: var(--text-main); padding: 3px 8px; border-radius: 6px; font-weight: 700; transition: color 0.3s; }
@@ -78,31 +81,31 @@
         .jnl-card { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 10px; transition: box-shadow 0.2s; }
         .jnl-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .jnl-card-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
-        .jnl-header-left { display: flex; align-items: center; gap: 15px; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px;}
+        .jnl-header-left { display: flex; align-items: center; gap: 15px; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px; }
         .jnl-chevron { color: var(--text-dim); font-size: 1.1rem; transition: transform 0.3s ease; display: inline-block; width: 20px; text-align: center; }
         .jnl-chevron.expanded { transform: rotate(90deg); }
-        .jnl-btn-view-note { background: #e0e7ff; color: var(--accent); border: 1px solid transparent; padding: 7px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
+        .jnl-btn-view-note { background: #e0e7ff; color: var(--accent); border: 1px solid transparent; padding: 7px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .jnl-btn-view-note:hover { background: #d0d9f7; }
-        .jnl-btn-add-note { background: white; color: var(--text-dim); border: 1px solid var(--border); padding: 7px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;}
+        .jnl-btn-add-note { background: white; color: var(--text-dim); border: 1px solid var(--border); padding: 7px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
         .jnl-btn-add-note:hover { border-color: #cbd5e1; background: #f8fafc; color: var(--text-main); }
-        .jnl-card-body { display: none; padding: 20px; gap: 30px; border-top: 1px solid #f1f5f9; align-items: center;}
+        .jnl-card-body { display: none; padding: 20px; gap: 30px; border-top: 1px solid #f1f5f9; align-items: center; }
         .jnl-card-body.expanded { display: flex; animation: slideDown 0.3s ease; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .jnl-chart-container { width: 280px; height: 120px; position: relative; flex-shrink: 0;}
+        .jnl-chart-container { width: 280px; height: 120px; position: relative; flex-shrink: 0; }
         .jnl-stats-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 25px; }
-        .jnl-stat-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding-bottom: 5px; border-bottom: 1px solid #f9fafb;}
+        .jnl-stat-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding-bottom: 5px; border-bottom: 1px solid #f9fafb; }
         .jnl-stat-label { color: var(--text-dim); font-weight: 500; }
         .jnl-stat-val { font-weight: 700; color: var(--text-main); }
         #journalListItems:empty::before { content: "No trades recorded yet. Start by adding a trade!"; display: block; text-align: center; color: var(--text-dim); padding: 40px; font-size: 0.9rem; }
-        .jnl-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 15px; user-select: none;}
+        .jnl-cal-header { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 15px; user-select: none; }
         .jnl-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 0.75rem; }
-        .jnl-cal-day-label { color: var(--text-dim); font-weight: 600; font-size: 0.65rem; margin-bottom: 5px; text-transform: uppercase;}
-        .jnl-cal-day { height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: var(--text-dim); cursor: pointer; transition: 0.2s; border: 1px solid transparent;}
+        .jnl-cal-day-label { color: var(--text-dim); font-weight: 600; font-size: 0.65rem; margin-bottom: 5px; text-transform: uppercase; }
+        .jnl-cal-day { height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: var(--text-dim); cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
         .jnl-cal-day:hover:not(.empty) { background: #f1f5f9; color: var(--text-main); }
         .jnl-cal-win { background: #ecfdf5; color: var(--green); font-weight: 700; border-color: var(--green); }
         .jnl-cal-loss { background: #fff1f2; color: var(--red); font-weight: 700; border-color: var(--red); }
-        .jnl-cal-selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); color: var(--accent) !important; font-weight: 800;}
-        .jnl-cal-day.empty { cursor: default; border:none; }
+        .jnl-cal-selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); color: var(--accent) !important; font-weight: 800; }
+        .jnl-cal-day.empty { cursor: default; border: none; }
         /* PLAYBOOK */
         #playbookView { display: none; padding: 25px 30px; flex-direction: column; gap: 20px; }
         .pb-header { display: flex; justify-content: space-between; align-items: center; }
@@ -136,932 +139,1001 @@
         .view-note-btn { background: #e0e7ff; color: #4338ca; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
         select, input[type="text"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         .btn-modal { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-        .acc-table-btn { background:none; border:none; cursor:pointer; padding:5px; font-size:1rem; }
+        .acc-table-btn { background: none; border: none; cursor: pointer; padding: 5px; font-size: 1rem; }
+        /* FIREBASE STATUS BAR */
+        .firebase-status { padding: 6px 20px; background: var(--sidebar-bg); border-top: 1px solid #2b2b40; font-size: 0.7rem; color: #a2a3b7; display: flex; align-items: center; gap: 8px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30,30,45,0.97); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; color: white; }
+        .loading-spinner { width: 40px; height: 40px; border: 3px solid #2b2b40; border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">TRADEZELLA</div>
-        <button class="add-trade-btn" onclick="document.getElementById('inImg').value=''; openModal('addModal')">+ Add Trade</button>
-        <ul class="nav-menu">
-            <li class="nav-item active" id="navDashboard" onclick="switchMainTab('dashboard')">
-                <span style="font-size:1.1rem;">📊</span> Dashboard
-            </li>
-            <li class="nav-item" id="navJournal" onclick="switchMainTab('journal')">
-                <span style="font-size:1.1rem;">📓</span> Daily Journal
-            </li>
-            <li class="nav-item" id="navPlaybook" onclick="switchMainTab('playbook')">
-                <span style="font-size:1.1rem;">📚</span> Playbook
-            </li>
-            <li class="nav-item">
-                <span style="font-size:1.1rem;">📝</span> Trade Log
-            </li>
-            <li class="nav-item">
-                <span style="font-size:1.1rem;">📈</span> Reports
-            </li>
-        </ul>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div style="font-weight:600; font-size:0.9rem;">Connecting to Firebase...</div>
+    <div style="font-size:0.75rem; color:#a2a3b7;" id="loadingMsg">Initializing cloud sync</div>
+</div>
+
+<div class="sidebar">
+    <div class="logo">
+        TRADEZELLA
+        <div class="sync-dot" id="syncDot" title="Sync status"></div>
+    </div>
+    <button class="add-trade-btn" onclick="document.getElementById('inImg').value=''; openModal('addModal')">+ Add Trade</button>
+    <ul class="nav-menu">
+        <li class="nav-item active" id="navDashboard" onclick="switchMainTab('dashboard')">
+            <span style="font-size:1.1rem;">📊</span> Dashboard
+        </li>
+        <li class="nav-item" id="navJournal" onclick="switchMainTab('journal')">
+            <span style="font-size:1.1rem;">📓</span> Daily Journal
+        </li>
+        <li class="nav-item" id="navPlaybook" onclick="switchMainTab('playbook')">
+            <span style="font-size:1.1rem;">📚</span> Playbook
+        </li>
+        <li class="nav-item">
+            <span style="font-size:1.1rem;">📝</span> Trade Log
+        </li>
+        <li class="nav-item">
+            <span style="font-size:1.1rem;">📈</span> Reports
+        </li>
+    </ul>
+    <div class="firebase-status">
+        <span id="fbStatusText">Connecting...</span>
+    </div>
+</div>
+
+<div class="main-wrapper">
+    <header class="header">
+        <h1 id="pageTitle" style="font-size:1.1rem; margin-left:30px;">Dashboard</h1>
+        <div style="position:relative; margin-right:30px;" id="accountContainer">
+            <div class="header-account-btn" onclick="toggleAccountMenu()">
+                <span style="font-size: 1rem; margin-right: 4px;">✔</span>
+                <span id="activeAccountName">Loading...</span>
+                <span class="header-bal-badge" id="headerBalanceBadge">$0.00</span>
+                <span style="font-size: 0.7rem; margin-left: 4px;">▼</span>
+            </div>
+            <div class="account-dropdown" id="accountMenuDropdown">
+                <div class="acc-dropdown-header">SWITCH ACCOUNT</div>
+                <div id="accountListContainer"></div>
+                <div style="border-top:1px solid var(--border); padding: 10px;">
+                    <button onclick="openAccountManager()" style="width:100%; padding:8px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">⚙️ Account Manager</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboardView">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info"><span class="stat-label">Net P&L</span><div class="stat-value" id="statPL">$0</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><span class="stat-label">Trade Win %</span><div class="stat-value" id="statWin">0%</div></div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                    <div class="gauge-box"><canvas id="gauge2"></canvas></div>
+                    <div class="badge-row"><span id="twWins" class="badge-win">0</span><span id="twBE" class="badge-be">0</span><span id="twLosses" class="badge-loss">0</span></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><span class="stat-label">Profit Factor</span><div class="stat-value" id="statPF">0.00</div></div>
+                <div style="width:45px; height:45px; display:flex; align-items:center; justify-content:center; position:relative;"><canvas id="gaugePF"></canvas></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><span class="stat-label">Day Win %</span><div class="stat-value" id="statDayWin">0%</div></div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
+                    <div class="gauge-box"><canvas id="gauge3"></canvas></div>
+                    <div class="badge-row"><span id="dwWins" class="badge-win">0</span><span id="dwBE" class="badge-be">0</span><span id="dwLosses" class="badge-loss">0</span></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info"><span class="stat-label">Avg win/loss trade</span><div class="stat-value" id="statAvg">0.00</div></div>
+                <div style="display:flex; flex-direction:column; width:80px; justify-content:center;">
+                    <div style="width:100%; height:6px; background:#eee; border-radius:10px; overflow:hidden; display:flex;">
+                        <div id="avgWinBar" style="width:50%; background:var(--green); height:100%;"></div>
+                        <div id="avgLossBar" style="width:50%; background:var(--red); height:100%;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; width:100%; font-size:0.55rem; font-weight:700; margin-top:4px;">
+                        <span id="awText" style="color:var(--green)">$0</span>
+                        <span id="alText" style="color:var(--red)">-$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="dashboard-content">
+            <div class="charts-row">
+                <div class="chart-box"><div class="canvas-container"><canvas id="radarChart"></canvas></div></div>
+                <div class="chart-box"><div class="canvas-container"><canvas id="lineChart"></canvas></div></div>
+            </div>
+            <div class="bottom-grid">
+                <div class="data-card">
+                    <div style="font-weight:700; margin-bottom:15px; font-size:0.85rem;">RECENT TRADES</div>
+                    <table id="tradeTable"><thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Strategy</th><th>P&L</th></tr></thead><tbody></tbody></table>
+                </div>
+                <div class="data-card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:700; font-size:0.85rem;">
+                        <span id="calTitle">Calendar</span><span>This Month</span>
+                    </div>
+                    <div class="cal-grid" id="calGrid"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="main-wrapper">
-        <header class="header">
-            <h1 id="pageTitle" style="font-size:1.1rem; margin-left:30px;">Dashboard</h1>
-            <div style="position:relative; margin-right:30px;" id="accountContainer">
-                <div class="header-account-btn" onclick="toggleAccountMenu()">
-                    <span style="font-size: 1rem; margin-right: 4px;">✔</span>
-                    <span id="activeAccountName">Loading...</span>
-                    <span class="header-bal-badge" id="headerBalanceBadge">$0.00</span>
-                    <span style="font-size: 0.7rem; margin-left: 4px;">▼</span>
-                </div>
-                <div class="account-dropdown" id="accountMenuDropdown">
-                    <div class="acc-dropdown-header">SWITCH ACCOUNT</div>
-                    <div id="accountListContainer"></div>
-                    <div style="border-top:1px solid var(--border); padding: 10px;">
-                        <button onclick="openAccountManager()" style="width:100%; padding:8px; background:#f8fafc; border:1px solid var(--border); border-radius:6px; cursor:pointer; font-weight:600; color:var(--text-main);">⚙️ Account Manager</button>
-                    </div>
+    <!-- DAILY JOURNAL VIEW -->
+    <div id="dailyJournalView">
+        <div class="jnl-left">
+            <div class="jnl-top-controls">
+                <div style="font-weight:600; font-size:0.9rem; color:var(--text-dim);">Trading Days Log</div>
+                <div style="display:flex; gap:10px;">
+                    <button class="jnl-btn">⚙️ Filters</button>
+                    <button class="jnl-btn">📅 Date range ▼</button>
                 </div>
             </div>
-        </header>
+            <div id="journalListItems"></div>
+        </div>
+        <div class="jnl-right">
+            <div class="jnl-cal-header">
+                <span style="cursor:pointer; color:var(--text-dim); padding:5px;" onclick="changeJournalMonth(-1)">❮</span>
+                <span id="jnlCalTitle">Month Year</span>
+                <span style="cursor:pointer; color:var(--text-dim); padding:5px;" onclick="changeJournalMonth(1)">❯</span>
+            </div>
+            <div class="jnl-cal-grid" id="jnlCalGrid"></div>
+            <div style="margin-top:20px; font-size:0.7rem; color:var(--text-dim); text-align:center;">Click on a highlighted day to view details.</div>
+        </div>
+    </div>
 
-        <!-- DASHBOARD VIEW -->
-        <div id="dashboardView">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-info"><span class="stat-label">Net P&L</span><div class="stat-value" id="statPL">$0</div></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info"><span class="stat-label">Trade Win %</span><div class="stat-value" id="statWin">0%</div></div>
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                        <div class="gauge-box"><canvas id="gauge2"></canvas></div>
-                        <div class="badge-row"><span id="twWins" class="badge-win">0</span><span id="twBE" class="badge-be">0</span><span id="twLosses" class="badge-loss">0</span></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info"><span class="stat-label">Profit Factor</span><div class="stat-value" id="statPF">0.00</div></div>
-                    <div style="width:45px; height:45px; display:flex; align-items:center; justify-content:center; position:relative;"><canvas id="gaugePF"></canvas></div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info"><span class="stat-label">Day Win %</span><div class="stat-value" id="statDayWin">0%</div></div>
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px;">
-                        <div class="gauge-box"><canvas id="gauge3"></canvas></div>
-                        <div class="badge-row"><span id="dwWins" class="badge-win">0</span><span id="dwBE" class="badge-be">0</span><span id="dwLosses" class="badge-loss">0</span></div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info"><span class="stat-label">Avg win/loss trade</span><div class="stat-value" id="statAvg">0.00</div></div>
-                    <div style="display:flex; flex-direction:column; width:80px; justify-content:center;">
-                        <div style="width:100%; height:6px; background:#eee; border-radius:10px; overflow:hidden; display:flex;">
-                            <div id="avgWinBar" style="width:50%; background:var(--green); height:100%;"></div>
-                            <div id="avgLossBar" style="width:50%; background:var(--red); height:100%;"></div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; width:100%; font-size:0.55rem; font-weight:700; margin-top:4px;">
-                            <span id="awText" style="color:var(--green)">$0</span>
-                            <span id="alText" style="color:var(--red)">-$0</span>
-                        </div>
-                    </div>
-                </div>
+    <!-- PLAYBOOK VIEW -->
+    <div id="playbookView">
+        <div class="pb-header">
+            <div>
+                <div style="font-weight:700; font-size:1.1rem;">My Playbook</div>
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-top:3px;">Define your trading rules, setups and strategies.</div>
             </div>
-            <div class="dashboard-content">
-                <div class="charts-row">
-                    <div class="chart-box"><div class="canvas-container"><canvas id="radarChart"></canvas></div></div>
-                    <div class="chart-box"><div class="canvas-container"><canvas id="lineChart"></canvas></div></div>
-                </div>
-                <div class="bottom-grid">
-                    <div class="data-card">
-                        <div style="font-weight:700; margin-bottom:15px; font-size:0.85rem;">RECENT TRADES</div>
-                        <table id="tradeTable"><thead><tr><th>Date</th><th>Symbol</th><th>Side</th><th>Strategy</th><th>P&L</th></tr></thead><tbody></tbody></table>
-                    </div>
-                    <div class="data-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:700; font-size:0.85rem;">
-                            <span id="calTitle">May 2026</span><span>Today</span>
-                        </div>
-                        <div class="cal-grid" id="calGrid"></div>
-                    </div>
-                </div>
+            <button class="btn-modal" onclick="openAddRuleModal()">+ Add Rule</button>
+        </div>
+        <div class="pb-filter-bar" id="pbFilterBar">
+            <button class="pb-filter-btn active" onclick="filterPlaybook('All', this)">All</button>
+            <button class="pb-filter-btn" onclick="filterPlaybook('Entry', this)">Entry</button>
+            <button class="pb-filter-btn" onclick="filterPlaybook('Exit', this)">Exit</button>
+            <button class="pb-filter-btn" onclick="filterPlaybook('Risk', this)">Risk</button>
+            <button class="pb-filter-btn" onclick="filterPlaybook('Mindset', this)">Mindset</button>
+            <button class="pb-filter-btn" onclick="filterPlaybook('Setup', this)">Setup</button>
+        </div>
+        <div class="pb-grid" id="playbookList"></div>
+        <div class="pb-empty" id="playbookEmpty">
+            <div class="pb-empty-icon">📚</div>
+            <div class="pb-empty-title">Your playbook is empty</div>
+            <div style="font-size:0.85rem;">Add your first trading rule or setup to get started.</div>
+            <button class="btn-modal" onclick="openAddRuleModal()" style="margin-top:16px;">+ Add First Rule</button>
+        </div>
+    </div>
+</div>
+
+<!-- ACCOUNT MANAGER MODAL -->
+<div id="accountManagerModal" class="modal" style="z-index: 2050;">
+    <div class="modal-content" style="width:650px;">
+        <h3 style="margin-top:0;">Account Manager</h3>
+        <div style="background:#f9fafb; padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:20px;">
+            <h4 style="margin-top:0; font-size:0.9rem;" id="accFormTitle">Add New Account</h4>
+            <input type="hidden" id="accEditId">
+            <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:10px;">
+                <input type="text" id="accName" placeholder="Account Name">
+                <select id="accType"><option value="Live Account">Live Account</option><option value="Demo Account">Demo Account</option></select>
+                <input type="number" id="accBalance" placeholder="Starting Balance ($)">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-modal" style="flex:1;" onclick="saveAccount()" id="accSaveBtn">Add Account</button>
+                <button class="btn-modal" style="flex:1; background:#f1f5f9; color:var(--text-main); display:none;" onclick="cancelAccountEdit()" id="accCancelBtn">Cancel Edit</button>
             </div>
         </div>
+        <table style="width:100%; border-collapse:collapse; text-align:left;">
+            <thead style="background:#f8fafc; border-bottom:1px solid var(--border);">
+                <tr><th style="padding:10px;">Name</th><th>Type</th><th>Starting Bal.</th><th style="text-align:right; padding-right:10px;">Actions</th></tr>
+            </thead>
+            <tbody id="accountManagerList"></tbody>
+        </table>
+        <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+            <button onclick="closeModal('accountManagerModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close Manager</button>
+        </div>
+    </div>
+</div>
 
-        <!-- DAILY JOURNAL VIEW -->
-        <div id="dailyJournalView">
-            <div class="jnl-left">
-                <div class="jnl-top-controls">
-                    <div style="font-weight:600; font-size:0.9rem; color:var(--text-dim);">Trading Days Log</div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="jnl-btn">⚙️ Filters</button>
-                        <button class="jnl-btn">📅 Date range ▼</button>
-                    </div>
-                </div>
-                <div id="journalListItems"></div>
+<!-- ADD TRADE MODAL -->
+<div id="addModal" class="modal" style="z-index: 2010;">
+    <div class="modal-content" style="width:400px;">
+        <h3>Add Trade</h3>
+        <input type="date" id="inDate">
+        <input type="text" id="inPair" placeholder="Symbol">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <select id="inSide"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+            <select id="inStrategy"><option value="Breakout">Breakout</option><option value="Trend Follow">Trend Follow</option><option value="Scalp">Scalp</option><option value="Reversal">Reversal</option></select>
+        </div>
+        <input type="number" id="inPL" placeholder="Net P&L ($)">
+        <textarea id="inNote" placeholder="Notes..." rows="2" style="resize:vertical;"></textarea>
+        <div style="margin-top:5px;">
+            <label style="font-size:0.7rem; color:var(--text-dim);">Attach Images (Multiple supported):</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="file" id="inImg" accept="image/*" multiple style="flex:1; margin:8px 0;">
+                <button onclick="clearImageInput()" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--text-dim); padding:4px 6px; border-radius:6px;" title="Clear images">✕</button>
             </div>
-            <div class="jnl-right">
-                <div class="jnl-cal-header">
-                    <span style="cursor:pointer; color:var(--text-dim); padding:5px;" onclick="changeJournalMonth(-1)">❮</span>
-                    <span id="jnlCalTitle">Month Year</span>
-                    <span style="cursor:pointer; color:var(--text-dim); padding:5px;" onclick="changeJournalMonth(1)">❯</span>
+            <div id="imgClearMsg" style="display:none; font-size:0.7rem; color:var(--green); margin-top:2px;">✓ Images cleared</div>
+        </div>
+        <button class="btn-modal" onclick="addTrade()" style="width:100%; margin-top:10px;">Save Trade</button>
+        <button onclick="closeModal('addModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
+    </div>
+</div>
+
+<!-- EDIT TRADE MODAL -->
+<div id="editTradeModal" class="modal" style="z-index: 2020;">
+    <div class="modal-content" style="width:400px;">
+        <h3>Edit Trade Details</h3>
+        <input type="hidden" id="editTradeId">
+        <input type="date" id="editDate">
+        <input type="text" id="editPair" placeholder="Symbol">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <select id="editSide"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
+            <select id="editStrategy"><option value="Breakout">Breakout</option><option value="Trend Follow">Trend Follow</option><option value="Scalp">Scalp</option><option value="Reversal">Reversal</option></select>
+        </div>
+        <input type="number" id="editPL" placeholder="Net P&L ($)">
+        <button class="btn-modal" onclick="saveEditedTrade()" style="width:100%; margin-top:10px;">Update Trade</button>
+        <button onclick="closeModal('editTradeModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
+    </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div id="detailModal" class="modal">
+    <div class="modal-content">
+        <div class="detail-header">
+            <div style="font-weight:700; font-size:1.1rem;"><span id="modalDateTitle">Date</span> <span id="modalNetPL" style="margin-left:15px;">$0.00</span></div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <div id="noteAreaControl" style="display:none; gap:15px; align-items:center;">
+                    <button onclick="cancelNoteEdit()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-weight:600; font-size:0.85rem;">Cancel</button>
+                    <button class="save-note-btn" onclick="saveEditedNote()">Save</button>
                 </div>
-                <div class="jnl-cal-grid" id="jnlCalGrid"></div>
-                <div style="margin-top:20px; font-size:0.7rem; color:var(--text-dim); text-align:center;">Click on a highlighted day to view details.</div>
+                <button id="viewNoteBtn" class="view-note-btn" onclick="enterNoteMode()">📝 View Note</button>
             </div>
         </div>
-
-        <!-- PLAYBOOK VIEW -->
-        <div id="playbookView">
-            <div class="pb-header">
+        <div id="statsArea" class="detail-top-row">
+            <div style="height: 120px;"><canvas id="modalMiniChart"></canvas></div>
+            <div class="detail-stats-grid">
+                <div class="d-stat-box"><span class="d-stat-label">Total Trades</span><span class="d-stat-value" id="mStatTrades">0</span></div>
+                <div class="d-stat-box"><span class="d-stat-label">Winners</span><span class="d-stat-value" id="mStatWins" style="color:var(--green)">0</span></div>
+                <div class="d-stat-box"><span class="d-stat-label">Gross P&L</span><span class="d-stat-value" id="mStatGross">$0.00</span></div>
+                <div class="d-stat-box"><span class="d-stat-label">Winrate</span><span class="d-stat-value" id="mStatWR">0%</span></div>
+            </div>
+        </div>
+        <div id="noteEditorArea" class="note-editor-container">
+            <div class="note-toolbar">
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <b>B</b> <i>I</i> <u>U</u>
+                    <span id="editingTradeLabel" style="color:var(--accent); font-weight:600; margin-left:15px;">Select a trade below</span>
+                </div>
                 <div>
-                    <div style="font-weight:700; font-size:1.1rem;">My Playbook</div>
-                    <div style="font-size:0.8rem; color:var(--text-dim); margin-top:3px;">Define your trading rules, setups and strategies.</div>
+                    <input type="file" id="editNoteImg" style="display:none;" accept="image/*" multiple onchange="previewNoteImg(this)">
+                    <button onclick="document.getElementById('editNoteImg').click()" style="background:none; border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">🖼️ Add Image(s)</button>
                 </div>
-                <button class="btn-modal" onclick="openAddRuleModal()">+ Add Rule</button>
             </div>
-            <div class="pb-filter-bar" id="pbFilterBar">
-                <button class="pb-filter-btn active" onclick="filterPlaybook('All', this)">All</button>
-                <button class="pb-filter-btn" onclick="filterPlaybook('Entry', this)">Entry</button>
-                <button class="pb-filter-btn" onclick="filterPlaybook('Exit', this)">Exit</button>
-                <button class="pb-filter-btn" onclick="filterPlaybook('Risk', this)">Risk</button>
-                <button class="pb-filter-btn" onclick="filterPlaybook('Mindset', this)">Mindset</button>
-                <button class="pb-filter-btn" onclick="filterPlaybook('Setup', this)">Setup</button>
-            </div>
-            <div class="pb-grid" id="playbookList"></div>
-            <div class="pb-empty" id="playbookEmpty">
-                <div class="pb-empty-icon">📚</div>
-                <div class="pb-empty-title">Your playbook is empty</div>
-                <div style="font-size:0.85rem;">Add your first trading rule or setup to get started.</div>
-                <button class="btn-modal" onclick="openAddRuleModal()" style="margin-top:16px;">+ Add First Rule</button>
-            </div>
+            <textarea id="noteTextarea" class="note-textarea" placeholder="Note content..."></textarea>
+            <div id="noteImgPreviewFull" style="display:none;"></div>
+        </div>
+        <table>
+            <thead style="background: #f8fafc;">
+                <tr><th>Time</th><th>Ticker</th><th>Side</th><th>Strategy</th><th>Net P&L</th></tr>
+            </thead>
+            <tbody id="modalTradeTable"></tbody>
+        </table>
+        <div id="activeTradeImageDisplay" style="display:none;"></div>
+        <div style="display:flex; justify-content:flex-end; gap: 10px; margin-top:20px;">
+            <button onclick="closeModal('detailModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close</button>
+            <button id="viewDetailsBtn" onclick="openEditTradeModal()" class="btn-modal">View Details</button>
         </div>
     </div>
+</div>
 
-    <!-- ACCOUNT MANAGER MODAL -->
-    <div id="accountManagerModal" class="modal" style="z-index: 2050;">
-        <div class="modal-content" style="width:650px;">
-            <h3 style="margin-top:0;">Account Manager</h3>
-            <div style="background:#f9fafb; padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:20px;">
-                <h4 style="margin-top:0; font-size:0.9rem;" id="accFormTitle">Add New Account</h4>
-                <input type="hidden" id="accEditId">
-                <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:10px;">
-                    <input type="text" id="accName" placeholder="Account Name">
-                    <select id="accType"><option value="Live Account">Live Account</option><option value="Demo Account">Demo Account</option></select>
-                    <input type="number" id="accBalance" placeholder="Starting Balance ($)">
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <button class="btn-modal" style="flex:1;" onclick="saveAccount()" id="accSaveBtn">Add Account</button>
-                    <button class="btn-modal" style="flex:1; background:#f1f5f9; color:var(--text-main); display:none;" onclick="cancelAccountEdit()" id="accCancelBtn">Cancel Edit</button>
-                </div>
-            </div>
-            <table style="width:100%; border-collapse:collapse; text-align:left;">
-                <thead style="background:#f8fafc; border-bottom:1px solid var(--border);">
-                    <tr><th style="padding:10px;">Name</th><th>Type</th><th>Starting Bal.</th><th style="text-align:right; padding-right:10px;">Actions</th></tr>
-                </thead>
-                <tbody id="accountManagerList"></tbody>
-            </table>
-            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-                <button onclick="closeModal('accountManagerModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close Manager</button>
-            </div>
+<!-- DAILY NOTE MODAL -->
+<div id="dailyNoteModal" class="modal" style="z-index:2100;">
+    <div class="modal-content" style="width:500px;">
+        <div class="detail-header">
+            <div style="font-weight:700;">Journal Note: <span id="dailyNoteDateTitle">Date</span></div>
+        </div>
+        <textarea id="dailyNoteTextarea" class="note-textarea" placeholder="How was your trading day? Your mindset, mistakes, lessons..." style="height:200px; resize:none; border:1px solid var(--border); margin-bottom:15px;"></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeModal('dailyNoteModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Cancel</button>
+            <button onclick="saveDailyNote()" class="btn-modal">Save Note</button>
         </div>
     </div>
+</div>
 
-    <!-- ADD TRADE MODAL -->
-    <div id="addModal" class="modal" style="z-index: 2010;">
-        <div class="modal-content" style="width:400px;">
-            <h3>Add Trade</h3>
-            <input type="date" id="inDate">
-            <input type="text" id="inPair" placeholder="Symbol">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <select id="inSide"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
-                <select id="inStrategy"><option value="Breakout">Breakout</option><option value="Trend Follow">Trend Follow</option><option value="Scalp">Scalp</option><option value="Reversal">Reversal</option></select>
-            </div>
-            <input type="number" id="inPL" placeholder="Net P&L ($)">
-            <textarea id="inNote" placeholder="Notes..." rows="2" style="resize:vertical;"></textarea>
-            <div style="margin-top:5px;">
-                <label style="font-size:0.7rem; color:var(--text-dim);">Attach Images (Multiple supported):</label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="file" id="inImg" accept="image/*" multiple style="flex:1; margin:8px 0;">
-                    <button onclick="clearImageInput()" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--text-dim); padding:4px 6px; border-radius:6px;" title="Clear images">✕</button>
-                </div>
-                <div id="imgClearMsg" style="display:none; font-size:0.7rem; color:var(--green); margin-top:2px;">✓ Images cleared</div>
-            </div>
-            <button class="btn-modal" onclick="addTrade()" style="width:100%; margin-top:10px;">Save Trade</button>
-            <button onclick="closeModal('addModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
-        </div>
-    </div>
-
-    <!-- EDIT TRADE MODAL -->
-    <div id="editTradeModal" class="modal" style="z-index: 2020;">
-        <div class="modal-content" style="width:400px;">
-            <h3>Edit Trade Details</h3>
-            <input type="hidden" id="editTradeId">
-            <input type="date" id="editDate">
-            <input type="text" id="editPair" placeholder="Symbol">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <select id="editSide"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select>
-                <select id="editStrategy"><option value="Breakout">Breakout</option><option value="Trend Follow">Trend Follow</option><option value="Scalp">Scalp</option><option value="Reversal">Reversal</option></select>
-            </div>
-            <input type="number" id="editPL" placeholder="Net P&L ($)">
-            <button class="btn-modal" onclick="saveEditedTrade()" style="width:100%; margin-top:10px;">Update Trade</button>
-            <button onclick="closeModal('editTradeModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
-        </div>
-    </div>
-
-    <!-- DETAIL MODAL -->
-    <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <div class="detail-header">
-                <div style="font-weight:700; font-size:1.1rem;"><span id="modalDateTitle">Date</span> <span id="modalNetPL" style="margin-left:15px;">$0.00</span></div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <div id="noteAreaControl" style="display:none; gap:15px; align-items:center;">
-                        <button onclick="cancelNoteEdit()" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-weight:600; font-size:0.85rem;">Cancel</button>
-                        <button class="save-note-btn" onclick="saveEditedNote()">Save</button>
-                    </div>
-                    <button id="viewNoteBtn" class="view-note-btn" onclick="enterNoteMode()">📝 View Note</button>
-                </div>
-            </div>
-            <div id="statsArea" class="detail-top-row">
-                <div style="height: 120px;"><canvas id="modalMiniChart"></canvas></div>
-                <div class="detail-stats-grid">
-                    <div class="d-stat-box"><span class="d-stat-label">Total Trades</span><span class="d-stat-value" id="mStatTrades">0</span></div>
-                    <div class="d-stat-box"><span class="d-stat-label">Winners</span><span class="d-stat-value" id="mStatWins" style="color:var(--green)">0</span></div>
-                    <div class="d-stat-box"><span class="d-stat-label">Gross P&L</span><span class="d-stat-value" id="mStatGross">$0.00</span></div>
-                    <div class="d-stat-box"><span class="d-stat-label">Winrate</span><span class="d-stat-value" id="mStatWR">0%</span></div>
-                </div>
-            </div>
-            <div id="noteEditorArea" class="note-editor-container">
-                <div class="note-toolbar">
-                    <div style="display:flex; gap:15px; align-items:center;">
-                        <b>B</b> <i>I</i> <u>U</u>
-                        <span id="editingTradeLabel" style="color:var(--accent); font-weight:600; margin-left:15px;">Select a trade below</span>
-                    </div>
-                    <div>
-                        <input type="file" id="editNoteImg" style="display:none;" accept="image/*" multiple onchange="previewNoteImg(this)">
-                        <button onclick="document.getElementById('editNoteImg').click()" style="background:none; border:1px solid #ddd; padding:4px 8px; border-radius:4px; font-size:0.7rem; cursor:pointer;">🖼️ Add Image(s)</button>
-                    </div>
-                </div>
-                <textarea id="noteTextarea" class="note-textarea" placeholder="Note content..."></textarea>
-                <div id="noteImgPreviewFull" style="display:none;"></div>
-            </div>
-            <table>
-                <thead style="background: #f8fafc;">
-                    <tr><th>Time</th><th>Ticker</th><th>Side</th><th>Strategy</th><th>Net P&L</th></tr>
-                </thead>
-                <tbody id="modalTradeTable"></tbody>
-            </table>
-            <div id="activeTradeImageDisplay" style="display:none;"></div>
-            <div style="display:flex; justify-content:flex-end; gap: 10px; margin-top:20px;">
-                <button onclick="closeModal('detailModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close</button>
-                <button id="viewDetailsBtn" onclick="openEditTradeModal()" class="btn-modal">View Details</button>
+<!-- ADD / EDIT RULE MODAL -->
+<div id="addRuleModal" class="modal" style="z-index:2010;">
+    <div class="modal-content" style="width:500px;">
+        <h3 style="margin-top:0;" id="ruleModalTitle">Add Playbook Rule</h3>
+        <input type="hidden" id="ruleEditId">
+        <input type="text" id="ruleTitle" placeholder="Rule title (e.g. Only trade with the trend)">
+        <select id="ruleCategory">
+            <option value="Entry">Entry Rule</option>
+            <option value="Exit">Exit Rule</option>
+            <option value="Risk">Risk Management</option>
+            <option value="Mindset">Mindset</option>
+            <option value="Setup">Setup</option>
+        </select>
+        <textarea id="ruleDesc" placeholder="Describe this rule in detail..." rows="5" style="resize:vertical;"></textarea>
+        <div style="margin-top:5px;">
+            <label style="font-size:0.7rem; color:var(--text-dim);">Attach Images (charts, examples...):</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="file" id="ruleImg" accept="image/*" multiple style="flex:1; margin:8px 0;">
+                <button onclick="document.getElementById('ruleImg').value=''" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--text-dim); padding:4px 6px;" title="Clear">✕</button>
             </div>
         </div>
+        <button class="btn-modal" onclick="saveRule()" style="width:100%; margin-top:12px;">Save Rule</button>
+        <button onclick="closeModal('addRuleModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
     </div>
+</div>
 
-    <!-- DAILY NOTE MODAL -->
-    <div id="dailyNoteModal" class="modal" style="z-index:2100;">
-        <div class="modal-content" style="width:500px;">
-            <div class="detail-header">
-                <div style="font-weight:700;">Journal Note: <span id="dailyNoteDateTitle">Date</span></div>
+<!-- VIEW RULE MODAL -->
+<div id="viewRuleModal" class="modal" style="z-index:2010;">
+    <div class="modal-content" style="width:620px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+            <div>
+                <div id="viewRuleTitle" style="font-weight:700; font-size:1.1rem; margin-bottom:6px;"></div>
+                <div id="viewRuleCategory"></div>
             </div>
-            <textarea id="dailyNoteTextarea" class="note-textarea" placeholder="How was your trading day? Your mindset, mistakes, lessons..." style="height:200px; resize:none; border:1px solid var(--border); margin-bottom:15px;"></textarea>
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button onclick="closeModal('dailyNoteModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Cancel</button>
-                <button onclick="saveDailyNote()" class="btn-modal">Save Note</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button onclick="editRule()" class="btn-modal" style="background:#f1f5f9; color:var(--text-main); padding:7px 14px; font-size:0.8rem;">✏️ Edit</button>
+                <button onclick="deleteRule()" class="btn-modal" style="background:#fff1f2; color:var(--red); border:1px solid #fecdd3; padding:7px 14px; font-size:0.8rem;">🗑️ Delete</button>
+                <button onclick="closeModal('viewRuleModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-dim); line-height:1;">✕</button>
             </div>
         </div>
-    </div>
-
-    <!-- ADD / EDIT RULE MODAL -->
-    <div id="addRuleModal" class="modal" style="z-index:2010;">
-        <div class="modal-content" style="width:500px;">
-            <h3 style="margin-top:0;" id="ruleModalTitle">Add Playbook Rule</h3>
-            <input type="hidden" id="ruleEditId">
-            <input type="text" id="ruleTitle" placeholder="Rule title (e.g. Only trade with the trend)">
-            <select id="ruleCategory">
-                <option value="Entry">Entry Rule</option>
-                <option value="Exit">Exit Rule</option>
-                <option value="Risk">Risk Management</option>
-                <option value="Mindset">Mindset</option>
-                <option value="Setup">Setup</option>
-            </select>
-            <textarea id="ruleDesc" placeholder="Describe this rule in detail..." rows="5" style="resize:vertical;"></textarea>
-            <div style="margin-top:5px;">
-                <label style="font-size:0.7rem; color:var(--text-dim);">Attach Images (charts, examples...):</label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <input type="file" id="ruleImg" accept="image/*" multiple style="flex:1; margin:8px 0;">
-                    <button onclick="document.getElementById('ruleImg').value=''" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:var(--text-dim); padding:4px 6px;" title="Clear">✕</button>
-                </div>
-            </div>
-            <button class="btn-modal" onclick="saveRule()" style="width:100%; margin-top:12px;">Save Rule</button>
-            <button onclick="closeModal('addRuleModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
+        <div id="viewRuleDesc" style="font-size:0.9rem; line-height:1.7; color:var(--text-main); background:#f9fafb; padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px; white-space:pre-wrap; min-height:60px;"></div>
+        <div id="viewRuleImgs" style="display:flex; flex-direction:column; gap:12px;"></div>
+        <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+            <button onclick="closeModal('viewRuleModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close</button>
         </div>
     </div>
+</div>
 
-    <!-- VIEW RULE MODAL -->
-    <div id="viewRuleModal" class="modal" style="z-index:2010;">
-        <div class="modal-content" style="width:620px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
-                <div>
-                    <div id="viewRuleTitle" style="font-weight:700; font-size:1.1rem; margin-bottom:6px;"></div>
-                    <div id="viewRuleCategory"></div>
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <button onclick="editRule()" class="btn-modal" style="background:#f1f5f9; color:var(--text-main); padding:7px 14px; font-size:0.8rem;">✏️ Edit</button>
-                    <button onclick="deleteRule()" class="btn-modal" style="background:#fff1f2; color:var(--red); border:1px solid #fecdd3; padding:7px 14px; font-size:0.8rem;">🗑️ Delete</button>
-                    <button onclick="closeModal('viewRuleModal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-dim); line-height:1;">✕</button>
-                </div>
-            </div>
-            <div id="viewRuleDesc" style="font-size:0.9rem; line-height:1.7; color:var(--text-main); background:#f9fafb; padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:15px; white-space:pre-wrap; min-height:60px;"></div>
-            <div id="viewRuleImgs" style="display:flex; flex-direction:column; gap:12px;"></div>
-            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
-                <button onclick="closeModal('viewRuleModal')" class="btn-modal" style="background:#f1f5f9; color:var(--text-main);">Close</button>
-            </div>
-        </div>
-    </div>
+<script>
+    // ====================== STATE ======================
+    let accounts = [];
+    let activeAccountId = null;
+    let trades = [];
+    let dailyNotes = {};
+    let playbookRules = [];
+    let currentView = 'dashboard';
+    let gaugeCharts = {};
+    let mainCharts = {};
+    let modalChart = null;
+    let currentDetailDate = "";
+    let activeTradeId = null;
+    let isNoteMode = false;
+    let currentImageIndex = 0;
+    let currentJournalNoteDate = "";
+    let viewingRuleId = null;
+    let pbActiveFilter = 'All';
+    let journalCurrentMonth = new Date();
+    let journalMiniCharts = {};
 
-    <script>
-        // ====================== DATA ======================
-        let accounts = [ { id: 1, name: "FX", type: "Demo Account", balance: 10000 } ];
-        let activeAccountId = 1;
-        let trades = [];
-        let dailyNotes = {};
-        let playbookRules = [];
-        let currentView = 'dashboard';
-        let gaugeCharts = {};
-        let mainCharts = {};
-        let modalChart = null;
-        let currentDetailDate = "";
-        let activeTradeId = null;
-        let isNoteMode = false;
-        let currentImageIndex = 0;
-        let currentJournalNoteDate = "";
-        let viewingRuleId = null;
-        let pbActiveFilter = 'All';
+    const CAT_COLORS = {
+        'Entry':   { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
+        'Exit':    { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
+        'Risk':    { bg: '#fff1f2', color: '#f43f5e', border: '#fecdd3' },
+        'Mindset': { bg: '#f5f3ff', color: '#8b5cf6', border: '#ddd6fe' },
+        'Setup':   { bg: '#ecfdf5', color: '#10b981', border: '#a7f3d0' },
+    };
 
-        // ====================== FIREBASE INIT ======================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDoN1KtmGJs4MQfpMXaUrg-XUhDOww8e0c",
-            authDomain: "trade-f9de0.firebaseapp.com",
-            projectId: "trade-f9de0",
-            storageBucket: "trade-f9de0.firebasestorage.app",
-            messagingSenderId: "134810424681",
-            appId: "1:134810424681:web:a62563f3240e46796e59f8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const userRef = db.collection("users").doc("faruk_trader");
-        let isFirebaseLoaded = false;
+    // ====================== FIREBASE SYNC (COMPAT) ======================
+    const firebaseConfig = {
+        apiKey: "AIzaSyDoN1KtmGJs4MQfpMXaUrg-XUhDOww8e0c",
+        authDomain: "trade-f9de0.firebaseapp.com",
+        projectId: "trade-f9de0",
+        storageBucket: "trade-f9de0.firebasestorage.app",
+        messagingSenderId: "134810424681",
+        appId: "1:134810424681:web:a62563f3240e46796e59f8"
+    };
 
-        function saveToCloud() {
-            if (!isFirebaseLoaded) return;
-            userRef.set({ accounts, activeAccountId, trades, dailyNotes, playbookRules })
-                .catch(e => console.error("Firebase save error:", e));
-        }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const journalRef = db.collection("users").doc("faruk_trader");
 
-        userRef.onSnapshot((doc) => {
-            if (doc.exists) {
-                const data = doc.data();
-                accounts = data.accounts || accounts;
-                activeAccountId = data.activeAccountId || activeAccountId;
-                trades = data.trades || [];
-                dailyNotes = data.dailyNotes || {};
-                playbookRules = data.playbookRules || [];
-                isFirebaseLoaded = true;
-                updateUI();
-                if (currentView === 'journal') renderDailyJournalView();
-                if (currentView === 'playbook') renderPlaybook();
-            } else {
-                isFirebaseLoaded = true;
-                saveToCloud();
-            }
-        });
-        // ===========================================================
+    function setSyncStatus(status) {
+        const dot = document.getElementById('syncDot');
+        const txt = document.getElementById('fbStatusText');
+        dot.className = 'sync-dot';
+        if (status === 'synced') { dot.classList.add('synced'); txt.innerText = '☁️ Cloud synced'; }
+        else if (status === 'saving') { txt.innerText = '⏫ Saving...'; }
+        else if (status === 'error') { dot.classList.add('error'); txt.innerText = '❌ Sync error'; }
+        else { txt.innerText = '🔄 Connecting...'; }
+    }
 
-        const CAT_COLORS = {
-            'Entry':   { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
-            'Exit':    { bg: '#fff7ed', color: '#f97316', border: '#fed7aa' },
-            'Risk':    { bg: '#fff1f2', color: '#f43f5e', border: '#fecdd3' },
-            'Mindset': { bg: '#f5f3ff', color: '#8b5cf6', border: '#ddd6fe' },
-            'Setup':   { bg: '#ecfdf5', color: '#10b981', border: '#a7f3d0' },
-        };
-
-        function getCurrentTrades() { return trades.filter(t => t.accountId === activeAccountId); }
-        function toBase64(file) {
-            return new Promise(resolve => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); });
-        }
-        function fmtK(num) { return Math.abs(num) >= 1000 ? '$' + (num/1000).toFixed(1) + 'K' : '$' + num.toFixed(0); }
-
-        // ====================== TAB SWITCH ======================
-        function switchMainTab(tabId) {
-            currentView = tabId;
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById('dashboardView').style.display = 'none';
-            document.getElementById('dailyJournalView').style.display = 'none';
-            document.getElementById('playbookView').style.display = 'none';
-
-            if (tabId === 'dashboard') {
-                document.getElementById('navDashboard').classList.add('active');
-                document.getElementById('pageTitle').innerText = 'Dashboard';
-                document.getElementById('dashboardView').style.display = 'flex';
-                updateUI();
-            } else if (tabId === 'journal') {
-                document.getElementById('navJournal').classList.add('active');
-                document.getElementById('pageTitle').innerText = 'Daily Journal';
-                document.getElementById('dailyJournalView').style.display = 'flex';
-                renderDailyJournalView();
-            } else if (tabId === 'playbook') {
-                document.getElementById('navPlaybook').classList.add('active');
-                document.getElementById('pageTitle').innerText = 'Playbook';
-                document.getElementById('playbookView').style.display = 'flex';
-                renderPlaybook();
-            }
-        }
-
-        // ====================== ACCOUNT ======================
-        function toggleAccountMenu() {
-            const menu = document.getElementById('accountMenuDropdown');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-        }
-        window.onclick = function(event) {
-            if (!event.target.closest('#accountContainer')) {
-                const d = document.getElementById('accountMenuDropdown');
-                if (d && d.style.display === 'block') d.style.display = 'none';
-            }
-        }
-        function renderAccountMenu() {
-            const container = document.getElementById('accountListContainer');
-            container.innerHTML = accounts.map(acc => {
-                const pl = trades.filter(t => t.accountId === acc.id).reduce((s,t) => s + t.pl, 0);
-                const bal = acc.balance + pl;
-                return `<div class="acc-item ${acc.id === activeAccountId ? 'active' : ''}" onclick="switchAccount(${acc.id})">
-                    <div><div class="acc-name">${acc.name}</div><div class="acc-type">${acc.type}</div></div>
-                    <div class="acc-bal" style="color:${bal >= acc.balance ? 'var(--green)' : 'var(--red)'}">$${bal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-                </div>`;
-            }).join('');
-        }
-        function switchAccount(id) {
-            activeAccountId = id;
-            if (currentView === 'dashboard') updateUI();
-            else if (currentView === 'journal') { updateHeaderBalanceOnly(); renderDailyJournalView(); }
-            else updateHeaderBalanceOnly();
-            toggleAccountMenu();
+    journalRef.onSnapshot((docSnap) => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        
+        // Compat API'de docSnap.exists bir metot değil, direkt değerdir.
+        if (docSnap.exists) {
+            const data = docSnap.data();
+            accounts = data.accounts || [];
+            trades = data.trades || [];
+            dailyNotes = data.dailyNotes || {};
+            playbookRules = data.playbookRules || [];
+            activeAccountId = data.activeAccountId || (accounts.length ? accounts[0].id : null);
+            setSyncStatus('synced');
+            renderCurrentView();
+        } else {
+            // İlk Kurulum
+            accounts = [{ id: Date.now(), name: "Main Account", type: "Live Account", balance: 10000 }];
+            activeAccountId = accounts[0].id;
+            trades = []; dailyNotes = {}; playbookRules = [];
             saveToCloud();
         }
-        function updateHeaderBalanceOnly() {
-            renderAccountMenu();
-            const acc = accounts.find(a => a.id === activeAccountId);
-            const pl = getCurrentTrades().reduce((s,t) => s + t.pl, 0);
+    }, (error) => {
+        console.error("Firebase error:", error);
+        document.getElementById('loadingMsg').innerText = 'Using local data (offline mode)';
+        setSyncStatus('error');
+        const local = localStorage.getItem('tradezellaV1');
+        if (local) {
+            try {
+                const d = JSON.parse(local);
+                accounts = d.accounts || [];
+                trades = d.trades || [];
+                dailyNotes = d.dailyNotes || {};
+                playbookRules = d.playbookRules || [];
+                activeAccountId = d.activeAccountId || (accounts.length ? accounts[0].id : null);
+            } catch(e) {}
+        }
+        if (!accounts.length) {
+            accounts = [{ id: Date.now(), name: "Main Account", type: "Live Account", balance: 10000 }];
+            activeAccountId = accounts[0].id;
+        }
+        document.getElementById('loadingOverlay').style.display = 'none';
+        renderCurrentView();
+    });
+
+    async function saveToCloud() {
+        setSyncStatus('saving');
+        const data = { accounts, trades, dailyNotes, playbookRules, activeAccountId, updatedAt: new Date().toISOString() };
+        localStorage.setItem('tradezellaV1', JSON.stringify(data));
+        try {
+            await journalRef.set(data);
+            setSyncStatus('synced');
+        } catch(e) {
+            console.error("Cloud save error:", e);
+            setSyncStatus('error');
+        }
+    }
+
+    function renderCurrentView() {
+        if (currentView === 'dashboard') updateUI();
+        else if (currentView === 'journal') renderDailyJournalView();
+        else if (currentView === 'playbook') renderPlaybook();
+    }
+
+    // ====================== HELPERS ======================
+    function getCurrentTrades() { return trades.filter(t => t.accountId === activeAccountId); }
+    function toBase64(file) {
+        return new Promise(resolve => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => resolve(r.result); });
+    }
+    function fmtK(num) { return Math.abs(num) >= 1000 ? '$' + (num/1000).toFixed(1) + 'K' : '$' + num.toFixed(0); }
+    function getActiveAccount() { return accounts.find(a => a.id === activeAccountId); }
+
+    // ====================== TAB SWITCH ======================
+    function switchMainTab(tabId) {
+        currentView = tabId;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('dashboardView').style.display = 'none';
+        document.getElementById('dailyJournalView').style.display = 'none';
+        document.getElementById('playbookView').style.display = 'none';
+        if (tabId === 'dashboard') {
+            document.getElementById('navDashboard').classList.add('active');
+            document.getElementById('pageTitle').innerText = 'Dashboard';
+            document.getElementById('dashboardView').style.display = 'flex';
+            updateUI();
+        } else if (tabId === 'journal') {
+            document.getElementById('navJournal').classList.add('active');
+            document.getElementById('pageTitle').innerText = 'Daily Journal';
+            document.getElementById('dailyJournalView').style.display = 'flex';
+            renderDailyJournalView();
+        } else if (tabId === 'playbook') {
+            document.getElementById('navPlaybook').classList.add('active');
+            document.getElementById('pageTitle').innerText = 'Playbook';
+            document.getElementById('playbookView').style.display = 'flex';
+            renderPlaybook();
+        }
+    }
+
+    // ====================== ACCOUNT ======================
+    function toggleAccountMenu() {
+        const menu = document.getElementById('accountMenuDropdown');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        if (menu.style.display === 'block') renderAccountMenu();
+    }
+    window.onclick = function(event) {
+        if (!event.target.closest('#accountContainer')) {
+            const d = document.getElementById('accountMenuDropdown');
+            if (d && d.style.display === 'block') d.style.display = 'none';
+        }
+    };
+    function renderAccountMenu() {
+        const container = document.getElementById('accountListContainer');
+        container.innerHTML = accounts.map(acc => {
+            const pl = trades.filter(t => t.accountId === acc.id).reduce((s,t) => s + t.pl, 0);
             const bal = acc.balance + pl;
-            document.getElementById('activeAccountName').innerText = acc.name;
-            document.getElementById('headerBalanceBadge').innerText = `$${bal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-            document.getElementById('headerBalanceBadge').style.color = bal >= acc.balance ? 'var(--green)' : 'var(--red)';
+            return `<div class="acc-item ${acc.id === activeAccountId ? 'active' : ''}" onclick="switchAccount(${acc.id})">
+                <div><div class="acc-name">${acc.name}</div><div class="acc-type">${acc.type}</div></div>
+                <div class="acc-bal" style="color:${bal >= acc.balance ? 'var(--green)' : 'var(--red)'}">$${bal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+            </div>`;
+        }).join('');
+    }
+    function switchAccount(id) {
+        activeAccountId = id;
+        saveToCloud();
+        toggleAccountMenu();
+    }
+    function updateHeaderBalanceOnly() {
+        renderAccountMenu();
+        const acc = getActiveAccount();
+        if (!acc) return;
+        const pl = getCurrentTrades().reduce((s,t) => s + t.pl, 0);
+        const bal = acc.balance + pl;
+        document.getElementById('activeAccountName').innerText = acc.name;
+        document.getElementById('headerBalanceBadge').innerText = `$${bal.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        document.getElementById('headerBalanceBadge').style.color = bal >= acc.balance ? 'var(--green)' : 'var(--red)';
+    }
+    function openAccountManager() { toggleAccountMenu(); renderAccountManagerList(); openModal('accountManagerModal'); }
+    function renderAccountManagerList() {
+        document.getElementById('accountManagerList').innerHTML = accounts.map(acc => `
+            <tr style="border-bottom:1px solid #f0f0f0;">
+                <td style="padding:12px 10px; font-weight:600;">${acc.name}</td>
+                <td style="padding:12px 10px; color:var(--text-dim);">${acc.type}</td>
+                <td style="padding:12px 10px; font-weight:600;">$${acc.balance.toLocaleString()}</td>
+                <td style="text-align:right; padding-right:10px;">
+                    <button class="acc-table-btn" style="color:var(--accent);" onclick="editAccount(${acc.id})">✏️</button>
+                    <button class="acc-table-btn" style="color:var(--red);" onclick="deleteAccount(${acc.id})">🗑️</button>
+                </td>
+            </tr>`).join('');
+    }
+    function saveAccount() {
+        const id = document.getElementById('accEditId').value;
+        const name = document.getElementById('accName').value;
+        const type = document.getElementById('accType').value;
+        const bal = parseFloat(document.getElementById('accBalance').value) || 0;
+        if (!name) return alert("Account name is required.");
+        if (id) {
+            const a = accounts.find(a => a.id == id);
+            if (a) { a.name = name; a.type = type; a.balance = bal; }
+        } else {
+            accounts.push({ id: Date.now(), name, type, balance: bal });
         }
-        function openAccountManager() { toggleAccountMenu(); renderAccountManager(); openModal('accountManagerModal'); }
-        function renderAccountManager() {
-            document.getElementById('accountManagerList').innerHTML = accounts.map(acc => `
-                <tr style="border-bottom:1px solid #f0f0f0;">
-                    <td style="padding:12px 10px; font-weight:600;">${acc.name}</td>
-                    <td style="padding:12px 10px; color:var(--text-dim);">${acc.type}</td>
-                    <td style="padding:12px 10px; font-weight:600;">$${acc.balance.toLocaleString()}</td>
-                    <td style="text-align:right; padding-right:10px;">
-                        <button class="acc-table-btn" style="color:var(--accent);" onclick="editAccount(${acc.id})">✏️</button>
-                        <button class="acc-table-btn" style="color:var(--red);" onclick="deleteAccount(${acc.id})">🗑️</button>
-                    </td>
-                </tr>`).join('');
-        }
-        function saveAccount() {
-            const id = document.getElementById('accEditId').value;
-            const name = document.getElementById('accName').value;
-            const type = document.getElementById('accType').value;
-            const bal = parseFloat(document.getElementById('accBalance').value) || 0;
-            if (!name) return alert("Account name is required.");
-            if (id) { const a = accounts.find(a => a.id == id); if(a) { a.name=name; a.type=type; a.balance=bal; } }
-            else accounts.push({ id: Date.now(), name, type, balance: bal });
-            cancelAccountEdit(); renderAccountManager();
-            if (currentView === 'dashboard') updateUI(); else { updateHeaderBalanceOnly(); if(currentView==='journal') renderDailyJournalView(); }
+        cancelAccountEdit();
+        renderAccountManagerList();
+        saveToCloud();
+    }
+    function editAccount(id) {
+        const a = accounts.find(a => a.id === id); if(!a) return;
+        document.getElementById('accEditId').value = a.id;
+        document.getElementById('accName').value = a.name;
+        document.getElementById('accType').value = a.type;
+        document.getElementById('accBalance').value = a.balance;
+        document.getElementById('accFormTitle').innerText = "Edit Account";
+        document.getElementById('accSaveBtn').innerText = "Update Account";
+        document.getElementById('accCancelBtn').style.display = "block";
+    }
+    function cancelAccountEdit() {
+        document.getElementById('accEditId').value = "";
+        document.getElementById('accName').value = "";
+        document.getElementById('accBalance').value = "";
+        document.getElementById('accFormTitle').innerText = "Add New Account";
+        document.getElementById('accSaveBtn').innerText = "Add Account";
+        document.getElementById('accCancelBtn').style.display = "none";
+    }
+    function deleteAccount(id) {
+        if (accounts.length <= 1) return alert("You must have at least one account.");
+        if (confirm("Are you sure? This will delete the account and ALL its trades!")) {
+            accounts = accounts.filter(a => a.id !== id);
+            trades = trades.filter(t => t.accountId !== id);
+            if (activeAccountId === id) activeAccountId = accounts[0].id;
+            renderAccountManagerList();
             saveToCloud();
         }
-        function editAccount(id) {
-            const a = accounts.find(a => a.id === id); if(!a) return;
-            document.getElementById('accEditId').value = a.id;
-            document.getElementById('accName').value = a.name;
-            document.getElementById('accType').value = a.type;
-            document.getElementById('accBalance').value = a.balance;
-            document.getElementById('accFormTitle').innerText = "Edit Account";
-            document.getElementById('accSaveBtn').innerText = "Update Account";
-            document.getElementById('accCancelBtn').style.display = "block";
-        }
-        function cancelAccountEdit() {
-            document.getElementById('accEditId').value = "";
-            document.getElementById('accName').value = "";
-            document.getElementById('accBalance').value = "";
-            document.getElementById('accFormTitle').innerText = "Add New Account";
-            document.getElementById('accSaveBtn').innerText = "Add Account";
-            document.getElementById('accCancelBtn').style.display = "none";
-        }
-        function deleteAccount(id) {
-            if (accounts.length <= 1) return alert("You must have at least one account.");
-            if (confirm("Are you sure? This will delete the account and ALL its trades!")) {
-                accounts = accounts.filter(a => a.id !== id);
-                trades = trades.filter(t => t.accountId !== id);
-                if (activeAccountId === id) activeAccountId = accounts[0].id;
-                renderAccountManager();
-                if (currentView === 'dashboard') updateUI(); else { updateHeaderBalanceOnly(); if(currentView==='journal') renderDailyJournalView(); }
-                saveToCloud();
-            }
-        }
+    }
 
-        // ====================== MODALS ======================
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-            if (id === 'detailModal') {
-                isNoteMode = false;
-                document.getElementById('noteEditorArea').style.display = 'none';
-                document.getElementById('statsArea').style.display = 'grid';
-                document.getElementById('viewNoteBtn').style.display = 'block';
-                document.getElementById('noteAreaControl').style.display = 'none';
-                document.getElementById('viewDetailsBtn').style.display = 'block';
-                document.getElementById('activeTradeImageDisplay').innerHTML = "";
-                document.getElementById('activeTradeImageDisplay').style.display = 'none';
-                activeTradeId = null; currentImageIndex = 0;
-            } else if (id === 'dailyNoteModal') {
-                currentJournalNoteDate = "";
-            } else if (id === 'addRuleModal') {
-                document.getElementById('ruleEditId').value = '';
-                document.getElementById('ruleTitle').value = '';
-                document.getElementById('ruleDesc').value = '';
-                document.getElementById('ruleImg').value = '';
-                document.getElementById('ruleModalTitle').innerText = 'Add Playbook Rule';
-            }
-        }
-
-        // ====================== TRADE NOTE EDITOR ======================
-        function enterNoteMode() {
-            isNoteMode = true;
-            document.getElementById('statsArea').style.display = 'none';
-            document.getElementById('noteEditorArea').style.display = 'block';
-            document.getElementById('viewNoteBtn').style.display = 'none';
-            document.getElementById('noteAreaControl').style.display = 'flex';
-            document.getElementById('viewDetailsBtn').style.display = 'none';
-            if (!activeTradeId) { const r = document.querySelector('#modalTradeTable tr'); if(r) r.click(); }
-            else loadTradeIntoEditor(activeTradeId);
-        }
-        function cancelNoteEdit() {
+    // ====================== MODALS ======================
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        if (id === 'detailModal') {
             isNoteMode = false;
             document.getElementById('noteEditorArea').style.display = 'none';
             document.getElementById('statsArea').style.display = 'grid';
             document.getElementById('viewNoteBtn').style.display = 'block';
             document.getElementById('noteAreaControl').style.display = 'none';
             document.getElementById('viewDetailsBtn').style.display = 'block';
+            document.getElementById('activeTradeImageDisplay').innerHTML = "";
+            document.getElementById('activeTradeImageDisplay').style.display = 'none';
+            activeTradeId = null; currentImageIndex = 0;
+        } else if (id === 'dailyNoteModal') {
+            currentJournalNoteDate = "";
+        } else if (id === 'addRuleModal') {
+            document.getElementById('ruleEditId').value = '';
+            document.getElementById('ruleTitle').value = '';
+            document.getElementById('ruleDesc').value = '';
+            document.getElementById('ruleImg').value = '';
+            document.getElementById('ruleModalTitle').innerText = 'Add Playbook Rule';
         }
-        function handleRowClick(id, el) {
-            activeTradeId = id; currentImageIndex = 0;
-            document.querySelectorAll('#modalTradeTable tr').forEach(r => r.classList.remove('active-row'));
-            el.classList.add('active-row');
-            if (isNoteMode) loadTradeIntoEditor(id);
-        }
-        function loadTradeIntoEditor(id) {
-            const t = getCurrentTrades().find(t => t.id === id); if(!t) return;
-            document.getElementById('noteTextarea').value = t.note || "";
-            document.getElementById('editingTradeLabel').innerText = `Viewing Note: ${t.pair} (${t.side})`;
-            currentImageIndex = 0; renderSlider('noteImgPreviewFull', true);
-        }
-        function renderSlider(containerId, isEditMode) {
-            const container = document.getElementById(containerId);
-            if (!activeTradeId) { container.innerHTML = ""; container.style.display = 'none'; return; }
-            const t = getCurrentTrades().find(t => t.id === activeTradeId);
-            if (!t || !t.imgs || !t.imgs.length) { container.innerHTML = ""; container.style.display = 'none'; return; }
-            if (currentImageIndex >= t.imgs.length) currentImageIndex = t.imgs.length - 1;
-            if (currentImageIndex < 0) currentImageIndex = 0;
-            let html = `<div style="position:relative; width:100%; text-align:center; background:#fcfcfc; border-top:1px solid var(--border); padding:15px; box-sizing:border-box;">`;
-            html += `<img src="${t.imgs[currentImageIndex]}" style="width:100%; max-height:450px; object-fit:contain; border-radius:4px;">`;
-            if (t.imgs.length > 1) {
-                html += `<button onclick="prevImage('${containerId}',${isEditMode})" style="position:absolute;left:25px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);color:white;border:none;width:35px;height:35px;border-radius:50%;cursor:pointer;">❮</button>`;
-                html += `<button onclick="nextImage('${containerId}',${isEditMode})" style="position:absolute;right:25px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);color:white;border:none;width:35px;height:35px;border-radius:50%;cursor:pointer;">❯</button>`;
-                html += `<div style="position:absolute;bottom:25px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:white;padding:4px 10px;border-radius:12px;font-size:0.75rem;">${currentImageIndex+1} / ${t.imgs.length}</div>`;
-            }
-            if (isEditMode) html += `<button onclick="deleteCurrentImage()" style="position:absolute;top:25px;right:25px;background:var(--red);color:white;border:none;padding:6px 12px;cursor:pointer;border-radius:6px;font-size:0.75rem;">🗑️ Delete Image</button>`;
-            html += `</div>`;
-            container.innerHTML = html; container.style.display = 'block';
-        }
-        function prevImage(c,e) { const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(t&&t.imgs&&t.imgs.length){currentImageIndex=(currentImageIndex-1+t.imgs.length)%t.imgs.length;renderSlider(c,e);} }
-        function nextImage(c,e) { const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(t&&t.imgs&&t.imgs.length){currentImageIndex=(currentImageIndex+1)%t.imgs.length;renderSlider(c,e);} }
-        function deleteCurrentImage() {
-            const t=getCurrentTrades().find(t=>t.id===activeTradeId);
-            if(t&&t.imgs&&t.imgs.length&&confirm("Delete this image?")){ t.imgs.splice(currentImageIndex,1); currentImageIndex=0; renderSlider('noteImgPreviewFull',true); updateUI(); saveToCloud(); }
-        }
-        async function previewNoteImg(input) {
-            if(input.files && activeTradeId) {
-                const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(!t.imgs)t.imgs=[];
-                for(let f of input.files){ t.imgs.push(await toBase64(f)); }
-                currentImageIndex=t.imgs.length-1; renderSlider('noteImgPreviewFull',true); saveToCloud();
-            }
-        }
-        function saveEditedNote() {
-            if(activeTradeId){ const t=getCurrentTrades().find(t=>t.id===activeTradeId); t.note=document.getElementById('noteTextarea').value; updateUI(); }
-            cancelNoteEdit();
-            saveToCloud();
-        }
-        function openEditTradeModal() {
-            if(!activeTradeId) return alert("Please select a trade from the table first.");
-            const t=getCurrentTrades().find(t=>t.id===activeTradeId);
-            document.getElementById('editTradeId').value=t.id; document.getElementById('editDate').value=t.date;
-            document.getElementById('editPair').value=t.pair; document.getElementById('editSide').value=t.side;
-            document.getElementById('editStrategy').value=t.strategy; document.getElementById('editPL').value=t.pl;
-            openModal('editTradeModal');
-        }
-        function saveEditedTrade() {
-            const id=parseInt(document.getElementById('editTradeId').value);
-            const t=getCurrentTrades().find(t=>t.id===id); const oldDate=t.date;
-            t.date=document.getElementById('editDate').value; t.pair=document.getElementById('editPair').value.toUpperCase();
-            t.side=document.getElementById('editSide').value; t.strategy=document.getElementById('editStrategy').value;
-            t.pl=parseFloat(document.getElementById('editPL').value);
-            if(currentView==='dashboard') updateUI(); else { updateHeaderBalanceOnly(); renderDailyJournalView(); }
-            closeModal('editTradeModal');
-            if(oldDate===t.date){ showDayDetails(t.date); } else { closeModal('detailModal'); }
-            saveToCloud();
-        }
-        async function addTrade() {
-            const date=document.getElementById('inDate').value;
-            const pair=document.getElementById('inPair').value.toUpperCase();
-            const pl=parseFloat(document.getElementById('inPL').value);
-            const side=document.getElementById('inSide').value;
-            const strategy=document.getElementById('inStrategy').value;
-            const note=document.getElementById('inNote').value;
-            const files=document.getElementById('inImg').files;
-            if(!date||!pair||isNaN(pl)) return;
-            let imgArr=[];
-            for(let f of files) imgArr.push(await toBase64(f));
-            trades.push({ id:Date.now(), accountId:activeAccountId, date, pair, pl, side, strategy, note, imgs:imgArr, time:new Date().toLocaleTimeString().slice(0,5) });
-            updateHeaderBalanceOnly();
-            if(currentView==='dashboard') updateUI(); else renderDailyJournalView();
-            clearImageInput();
-            closeModal('addModal');
-            saveToCloud();
-        }
-        function clearImageInput() {
-            const input=document.getElementById('inImg'); input.value='';
-            const msg=document.getElementById('imgClearMsg'); msg.style.display='block';
-            setTimeout(()=>{ msg.style.display='none'; }, 2000);
-        }
+    }
 
-        // ====================== DASHBOARD ======================
-        function updatePFGauge(id, gp, gl) {
-            if(gaugeCharts[id]) gaugeCharts[id].destroy();
-            let data=[gp,gl], colors=['#10b981','#f43f5e'];
-            if(gp===0&&gl===0){ data=[1]; colors=['#eee']; }
-            gaugeCharts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+    // ====================== TRADE NOTES ======================
+    function enterNoteMode() {
+        isNoteMode = true;
+        document.getElementById('statsArea').style.display = 'none';
+        document.getElementById('noteEditorArea').style.display = 'block';
+        document.getElementById('viewNoteBtn').style.display = 'none';
+        document.getElementById('noteAreaControl').style.display = 'flex';
+        document.getElementById('viewDetailsBtn').style.display = 'none';
+        if (!activeTradeId) { const r = document.querySelector('#modalTradeTable tr'); if(r) r.click(); }
+        else loadTradeIntoEditor(activeTradeId);
+    }
+    function cancelNoteEdit() {
+        isNoteMode = false;
+        document.getElementById('noteEditorArea').style.display = 'none';
+        document.getElementById('statsArea').style.display = 'grid';
+        document.getElementById('viewNoteBtn').style.display = 'block';
+        document.getElementById('noteAreaControl').style.display = 'none';
+        document.getElementById('viewDetailsBtn').style.display = 'block';
+    }
+    function handleRowClick(id, el) {
+        activeTradeId = id; currentImageIndex = 0;
+        document.querySelectorAll('#modalTradeTable tr').forEach(r => r.classList.remove('active-row'));
+        el.classList.add('active-row');
+        if (isNoteMode) loadTradeIntoEditor(id);
+    }
+    function loadTradeIntoEditor(id) {
+        const t = getCurrentTrades().find(t => t.id === id); if(!t) return;
+        document.getElementById('noteTextarea').value = t.note || "";
+        document.getElementById('editingTradeLabel').innerText = `Viewing Note: ${t.pair} (${t.side})`;
+        currentImageIndex = 0; renderSlider('noteImgPreviewFull', true);
+    }
+    function renderSlider(containerId, isEditMode) {
+        const container = document.getElementById(containerId);
+        if (!activeTradeId) { container.innerHTML = ""; container.style.display = 'none'; return; }
+        const t = getCurrentTrades().find(t => t.id === activeTradeId);
+        if (!t || !t.imgs || !t.imgs.length) { container.innerHTML = ""; container.style.display = 'none'; return; }
+        if (currentImageIndex >= t.imgs.length) currentImageIndex = t.imgs.length - 1;
+        if (currentImageIndex < 0) currentImageIndex = 0;
+        let html = `<div style="position:relative; width:100%; text-align:center; background:#fcfcfc; border-top:1px solid var(--border); padding:15px; box-sizing:border-box;">`;
+        html += `<img src="${t.imgs[currentImageIndex]}" style="width:100%; max-height:450px; object-fit:contain; border-radius:4px;">`;
+        if (t.imgs.length > 1) {
+            html += `<button onclick="prevImage('${containerId}',${isEditMode})" style="position:absolute;left:25px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);color:white;border:none;width:35px;height:35px;border-radius:50%;cursor:pointer;">❮</button>`;
+            html += `<button onclick="nextImage('${containerId}',${isEditMode})" style="position:absolute;right:25px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.6);color:white;border:none;width:35px;height:35px;border-radius:50%;cursor:pointer;">❯</button>`;
+            html += `<div style="position:absolute;bottom:25px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:white;padding:4px 10px;border-radius:12px;font-size:0.75rem;">${currentImageIndex+1} / ${t.imgs.length}</div>`;
         }
-        function updateGauge(id, color, val) {
-            if(gaugeCharts[id]) gaugeCharts[id].destroy();
-            gaugeCharts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data:[val,100-val],backgroundColor:[color,'#eee'],borderWidth:0}]},options:{rotation:-90,circumference:180,cutout:'85%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+        if (isEditMode) html += `<button onclick="deleteCurrentImage()" style="position:absolute;top:25px;right:25px;background:var(--red);color:white;border:none;padding:6px 12px;cursor:pointer;border-radius:6px;font-size:0.75rem;">🗑️ Delete Image</button>`;
+        html += `</div>`;
+        container.innerHTML = html; container.style.display = 'block';
+    }
+    function prevImage(c,e) { const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(t&&t.imgs&&t.imgs.length){currentImageIndex=(currentImageIndex-1+t.imgs.length)%t.imgs.length;renderSlider(c,e);} }
+    function nextImage(c,e) { const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(t&&t.imgs&&t.imgs.length){currentImageIndex=(currentImageIndex+1)%t.imgs.length;renderSlider(c,e);} }
+    function deleteCurrentImage() {
+        const t=getCurrentTrades().find(t=>t.id===activeTradeId);
+        if(t&&t.imgs&&t.imgs.length&&confirm("Delete this image?")){ t.imgs.splice(currentImageIndex,1); currentImageIndex=0; renderSlider('noteImgPreviewFull',true); saveToCloud(); }
+    }
+    async function previewNoteImg(input) {
+        if(input.files && activeTradeId) {
+            const t=getCurrentTrades().find(t=>t.id===activeTradeId); if(!t.imgs) t.imgs=[];
+            for(let f of input.files){ t.imgs.push(await toBase64(f)); }
+            currentImageIndex=t.imgs.length-1; renderSlider('noteImgPreviewFull',true); saveToCloud();
         }
-        function updateUI() {
-            updateHeaderBalanceOnly();
-            const cTrades=getCurrentTrades();
-            document.getElementById('tradeTable').querySelector('tbody').innerHTML=cTrades.slice().reverse().slice(0,10).map(t=>`<tr class="selectable-trade" onclick="showDayDetails('${t.date}')"><td>${t.date}</td><td>${t.pair}</td><td>${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</td></tr>`).join('');
-            const totalPL=cTrades.reduce((s,t)=>s+t.pl,0);
-            const plEl=document.getElementById('statPL'); plEl.innerText=`$${totalPL.toLocaleString()}`; plEl.style.color=totalPL>=0?'var(--green)':'var(--red)';
-            const wins=cTrades.filter(t=>t.pl>0), losses=cTrades.filter(t=>t.pl<0), be=cTrades.filter(t=>t.pl===0);
-            const wr=cTrades.length?Math.round(wins.length/cTrades.length*100):0;
-            document.getElementById('statWin').innerText=wr+'%'; document.getElementById('twWins').innerText=wins.length; document.getElementById('twBE').innerText=be.length; document.getElementById('twLosses').innerText=losses.length;
-            updateGauge('gauge2','#10b981',wr);
-            const gp=wins.reduce((s,t)=>s+t.pl,0), gl=Math.abs(losses.reduce((s,t)=>s+t.pl,0));
-            const pf=gl>0?(gp/gl).toFixed(2):(gp>0?gp.toFixed(2):"0.00");
-            document.getElementById('statPF').innerText=pf; updatePFGauge('gaugePF',gp,gl);
-            const dayGroups={}; cTrades.forEach(t=>{dayGroups[t.date]=(dayGroups[t.date]||0)+t.pl;});
-            const dv=Object.values(dayGroups), wd=dv.filter(v=>v>0).length, ld=dv.filter(v=>v<0).length, bd=dv.filter(v=>v===0).length;
-            const dwr=dv.length?Math.round(wd/dv.length*100):0;
-            document.getElementById('statDayWin').innerText=dwr+'%'; document.getElementById('dwWins').innerText=wd; document.getElementById('dwBE').innerText=bd; document.getElementById('dwLosses').innerText=ld;
-            updateGauge('gauge3','#10b981',dwr);
-            const aw=wins.length?gp/wins.length:0, al=losses.length?gl/losses.length:0;
-            const ar=al>0?(aw/al).toFixed(2):(aw>0?aw.toFixed(2):"0.00");
-            document.getElementById('statAvg').innerText=ar; document.getElementById('awText').innerText=fmtK(aw); document.getElementById('alText').innerText='-'+fmtK(al);
-            const tb=aw+al;
-            if(tb>0){ document.getElementById('avgWinBar').style.width=(aw/tb*100)+'%'; document.getElementById('avgLossBar').style.width=(100-aw/tb*100)+'%'; }
-            else { document.getElementById('avgWinBar').style.width='50%'; document.getElementById('avgLossBar').style.width='50%'; }
-            renderDashboardCalendar(cTrades); renderMainCharts(cTrades);
-        }
-        function renderDashboardCalendar(cTrades) {
-            const cal=document.getElementById('calGrid'); cal.innerHTML='';
-            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>cal.innerHTML+=`<div class="cal-day-label">${d}</div>`);
-            const now=new Date(), fd=new Date(now.getFullYear(),now.getMonth(),1).getDay(), dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-            for(let i=0;i<fd;i++) cal.innerHTML+=`<div></div>`;
-            for(let d=1;d<=dim;d++){
-                const dStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const dt=cTrades.filter(t=>t.date===dStr), sum=dt.reduce((s,t)=>s+t.pl,0);
-                const hasNote=dt.some(t=>(t.note&&t.note.trim())||( t.imgs&&t.imgs.length));
-                const cls=dt.length?(sum>=0?'day-win':'day-loss'):'';
-                const svg=hasNote?`<svg class="note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`:'';
-                cal.innerHTML+=`<div class="cal-day ${cls}" onclick="showDayDetails('${dStr}')">${svg}<span style="align-self:flex-end">${d}</span><span style="font-weight:700;font-size:0.65rem;margin-top:auto;">${dt.length?sum.toFixed(0)+'$':''}</span><div class="pip-container">${dt.map(t=>`<div class="pip ${t.pl>=0?'pip-win':'pip-loss'}"></div>`).join('')}</div></div>`;
-            }
-        }
-        function showDayDetails(dStr) {
-            const cTrades=getCurrentTrades(), dt=cTrades.filter(t=>t.date===dStr); if(!dt.length) return;
-            currentDetailDate=dStr; isNoteMode=false; activeTradeId=null;
-            document.getElementById('noteEditorArea').style.display='none'; document.getElementById('statsArea').style.display='grid';
-            document.getElementById('viewNoteBtn').style.display='block'; document.getElementById('noteAreaControl').style.display='none'; document.getElementById('viewDetailsBtn').style.display='block';
-            const net=dt.reduce((s,t)=>s+t.pl,0), wins=dt.filter(t=>t.pl>0).length;
-            document.getElementById('modalDateTitle').innerText=dStr; document.getElementById('modalNetPL').innerText=`$${net.toFixed(2)}`; document.getElementById('modalNetPL').style.color=net>=0?'var(--green)':'var(--red)';
-            document.getElementById('mStatTrades').innerText=dt.length; document.getElementById('mStatWins').innerText=wins; document.getElementById('mStatGross').innerText=`$${net.toFixed(2)}`; document.getElementById('mStatWR').innerText=`${Math.round(wins/dt.length*100)}%`;
-            document.getElementById('modalTradeTable').innerHTML=dt.map(t=>`<tr class="selectable-trade" onclick="handleRowClick(${t.id},this)"><td>${t.time}</td><td style="font-weight:700;">${t.pair}</td><td style="color:${t.side==='LONG'?'var(--accent)':'#f59e0b'};font-weight:700;">${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'};font-weight:700;">$${t.pl.toFixed(2)}</td></tr>`).join('');
-            renderModalChart(dt); openModal('detailModal');
-        }
-        function renderModalChart(dt) {
-            const ctx=document.getElementById('modalMiniChart').getContext('2d'); if(modalChart) modalChart.destroy();
-            let cur=0,pts=[0]; dt.forEach(t=>{cur+=t.pl;pts.push(cur);});
-            modalChart=new Chart(ctx,{type:'line',data:{labels:pts.map((_,i)=>i),datasets:[{data:pts,borderColor:'#10b981',fill:true,backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
-        }
-        function renderMainCharts(cTrades) {
-            const opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
-            if(mainCharts.radar) mainCharts.radar.destroy();
-            mainCharts.radar=new Chart(document.getElementById('radarChart'),{type:'radar',data:{labels:['Win %','PF','AWR'],datasets:[{data:[80,70,90],backgroundColor:'rgba(99,102,241,0.2)',borderColor:'#6366f1'}]},options:{...opt,scales:{r:{ticks:{display:false}}}}});
-            const sorted=[...cTrades].sort((a,b)=>new Date(a.date)-new Date(b.date));
-            let cur=0,pts=[],lbs=[]; sorted.forEach(t=>{cur+=t.pl;pts.push(cur);lbs.push(t.date);});
-            if(mainCharts.line) mainCharts.line.destroy();
-            mainCharts.line=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:lbs,datasets:[{data:pts,borderColor:'#6366f1',fill:true,backgroundColor:'rgba(99,102,241,0.1)',tension:0.4}]},options:opt});
-        }
+    }
+    function saveEditedNote() {
+        if(activeTradeId){ const t=getCurrentTrades().find(t=>t.id===activeTradeId); t.note=document.getElementById('noteTextarea').value; saveToCloud(); }
+        cancelNoteEdit();
+    }
+    function openEditTradeModal() {
+        if(!activeTradeId) return alert("Please select a trade from the table first.");
+        const t=getCurrentTrades().find(t=>t.id===activeTradeId);
+        document.getElementById('editTradeId').value=t.id; document.getElementById('editDate').value=t.date;
+        document.getElementById('editPair').value=t.pair; document.getElementById('editSide').value=t.side;
+        document.getElementById('editStrategy').value=t.strategy; document.getElementById('editPL').value=t.pl;
+        openModal('editTradeModal');
+    }
+    function saveEditedTrade() {
+        const id=parseInt(document.getElementById('editTradeId').value);
+        const t=trades.find(t=>t.id===id); if(!t) return;
+        const oldDate=t.date;
+        t.date=document.getElementById('editDate').value; t.pair=document.getElementById('editPair').value.toUpperCase();
+        t.side=document.getElementById('editSide').value; t.strategy=document.getElementById('editStrategy').value;
+        t.pl=parseFloat(document.getElementById('editPL').value);
+        saveToCloud();
+        closeModal('editTradeModal');
+        if(oldDate===t.date){ showDayDetails(t.date); } else { closeModal('detailModal'); }
+    }
+    async function addTrade() {
+        const date=document.getElementById('inDate').value;
+        const pair=document.getElementById('inPair').value.toUpperCase();
+        const pl=parseFloat(document.getElementById('inPL').value);
+        const side=document.getElementById('inSide').value;
+        const strategy=document.getElementById('inStrategy').value;
+        const note=document.getElementById('inNote').value;
+        const files=document.getElementById('inImg').files;
+        if(!date||!pair||isNaN(pl)) return;
+        let imgArr=[];
+        for(let f of files) imgArr.push(await toBase64(f));
+        trades.push({ id:Date.now(), accountId:activeAccountId, date, pair, pl, side, strategy, note, imgs:imgArr, time:new Date().toLocaleTimeString().slice(0,5) });
+        saveToCloud();
+        clearImageInput();
+        closeModal('addModal');
+    }
+    function clearImageInput() {
+        const input=document.getElementById('inImg'); input.value='';
+        const msg=document.getElementById('imgClearMsg'); msg.style.display='block';
+        setTimeout(()=>{ msg.style.display='none'; }, 2000);
+    }
 
-        // ====================== DAILY JOURNAL ======================
-        function groupTradesByDate(arr) {
-            const g=arr.reduce((acc,t)=>{ if(!acc[t.date])acc[t.date]=[]; acc[t.date].push(t); return acc; },{});
-            return Object.keys(g).sort((a,b)=>new Date(b)-new Date(a)).map(date=>({date,trades:g[date]}));
+    // ====================== DASHBOARD ======================
+    function updatePFGauge(id, gp, gl) {
+        if(gaugeCharts[id]) gaugeCharts[id].destroy();
+        let data=[gp,gl], colors=['#10b981','#f43f5e'];
+        if(gp===0&&gl===0){ data=[1]; colors=['#eee']; }
+        gaugeCharts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'75%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+    }
+    function updateGauge(id, color, val) {
+        if(gaugeCharts[id]) gaugeCharts[id].destroy();
+        gaugeCharts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data:[val,100-val],backgroundColor:[color,'#eee'],borderWidth:0}]},options:{rotation:-90,circumference:180,cutout:'85%',plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+    }
+    function updateUI() {
+        updateHeaderBalanceOnly();
+        const cTrades=getCurrentTrades();
+        document.getElementById('tradeTable').querySelector('tbody').innerHTML=cTrades.slice().reverse().slice(0,10).map(t=>`<tr><td>${t.date}</td><td>${t.pair}</td><td>${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'}">${t.pl}$</td></tr>`).join('');
+        const totalPL=cTrades.reduce((s,t)=>s+t.pl,0);
+        const plEl=document.getElementById('statPL'); plEl.innerText=`$${totalPL.toLocaleString()}`; plEl.style.color=totalPL>=0?'var(--green)':'var(--red)';
+        const wins=cTrades.filter(t=>t.pl>0), losses=cTrades.filter(t=>t.pl<0), be=cTrades.filter(t=>t.pl===0);
+        const wr=cTrades.length?Math.round(wins.length/cTrades.length*100):0;
+        document.getElementById('statWin').innerText=wr+'%'; document.getElementById('twWins').innerText=wins.length; document.getElementById('twBE').innerText=be.length; document.getElementById('twLosses').innerText=losses.length;
+        updateGauge('gauge2','#10b981',wr);
+        const gp=wins.reduce((s,t)=>s+t.pl,0), gl=Math.abs(losses.reduce((s,t)=>s+t.pl,0));
+        const pf=gl>0?(gp/gl).toFixed(2):(gp>0?gp.toFixed(2):"0.00");
+        document.getElementById('statPF').innerText=pf; updatePFGauge('gaugePF',gp,gl);
+        const dayGroups={}; cTrades.forEach(t=>{dayGroups[t.date]=(dayGroups[t.date]||0)+t.pl;});
+        const dv=Object.values(dayGroups), wd=dv.filter(v=>v>0).length, ld=dv.filter(v=>v<0).length, bd=dv.filter(v=>v===0).length;
+        const dwr=dv.length?Math.round(wd/dv.length*100):0;
+        document.getElementById('statDayWin').innerText=dwr+'%'; document.getElementById('dwWins').innerText=wd; document.getElementById('dwBE').innerText=bd; document.getElementById('dwLosses').innerText=ld;
+        updateGauge('gauge3','#10b981',dwr);
+        const aw=wins.length?gp/wins.length:0, al=losses.length?gl/losses.length:0;
+        const ar=al>0?(aw/al).toFixed(2):(aw>0?aw.toFixed(2):"0.00");
+        document.getElementById('statAvg').innerText=ar; document.getElementById('awText').innerText=fmtK(aw); document.getElementById('alText').innerText='-'+fmtK(al);
+        const tb=aw+al;
+        if(tb>0){ document.getElementById('avgWinBar').style.width=(aw/tb*100)+'%'; document.getElementById('avgLossBar').style.width=(100-aw/tb*100)+'%'; }
+        else { document.getElementById('avgWinBar').style.width='50%'; document.getElementById('avgLossBar').style.width='50%'; }
+        renderDashboardCalendar(cTrades); renderMainCharts(cTrades);
+    }
+    function renderDashboardCalendar(cTrades) {
+        const cal=document.getElementById('calGrid'); cal.innerHTML='';
+        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>cal.innerHTML+=`<div class="cal-day-label">${d}</div>`);
+        const now=new Date(), fd=new Date(now.getFullYear(),now.getMonth(),1).getDay(), dim=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+        document.getElementById('calTitle').innerText=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        for(let i=0;i<fd;i++) cal.innerHTML+=`<div></div>`;
+        for(let d=1;d<=dim;d++){
+            const dStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const dt=cTrades.filter(t=>t.date===dStr), sum=dt.reduce((s,t)=>s+t.pl,0);
+            const hasNote=dt.some(t=>(t.note&&t.note.trim())||(t.imgs&&t.imgs.length));
+            const cls=dt.length?(sum>=0?'day-win':'day-loss'):'';
+            const svg=hasNote?`<svg class="note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`:'';
+            cal.innerHTML+=`<div class="cal-day ${cls}" onclick="showDayDetails('${dStr}')">${svg}<span style="align-self:flex-end">${d}</span><span style="font-weight:700;font-size:0.65rem;margin-top:auto;">${dt.length?sum.toFixed(0)+'$':''}</span><div class="pip-container">${dt.map(t=>`<div class="pip ${t.pl>=0?'pip-win':'pip-loss'}"></div>`).join('')}</div></div>`;
         }
-        function renderDailyJournalList() {
-            const container=document.getElementById('journalListItems'); if(!container) return;
-            container.innerHTML='';
-            const grouped=groupTradesByDate(getCurrentTrades());
-            grouped.forEach((group,index)=>{
-                const {date:dateStr, trades:dayTrades}=group;
-                const netPL=dayTrades.reduce((s,t)=>s+t.pl,0);
-                const winners=dayTrades.filter(t=>t.pl>0), losers=dayTrades.filter(t=>t.pl<0);
-                const gp=winners.reduce((s,t)=>s+t.pl,0), gl=Math.abs(losers.reduce((s,t)=>s+t.pl,0));
-                const wr=dayTrades.length?Math.round(winners.length/dayTrades.length*100):0;
-                const pf=gl>0?(gp/gl).toFixed(2):(gp>0?"Minf":"0.00");
-                const fd=new Date(dateStr).toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'2-digit'});
-                container.innerHTML+=`
-                <div class="jnl-card">
-                    <div class="jnl-card-header" onclick="toggleJournalAccordion('${dateStr}',this)">
-                        <div class="jnl-header-left">
-                            <span class="jnl-chevron" id="chevron-${dateStr}">❯</span>
-                            <span>${fd}</span>
-                            <span style="color:${netPL>=0?'var(--green)':'var(--red)'};font-size:0.9rem;">Net P&L $${netPL.toFixed(2)}</span>
-                        </div>
-                        <button class="${dailyNotes[dateStr]?'jnl-btn-view-note':'jnl-btn-add-note'}" onclick="openDailyNoteModal('${dateStr}');event.stopPropagation();">
-                            📝 ${dailyNotes[dateStr]?'View Note':'Add Note'}
-                        </button>
+    }
+    function showDayDetails(dStr) {
+        const cTrades=getCurrentTrades(), dt=cTrades.filter(t=>t.date===dStr); if(!dt.length) return;
+        currentDetailDate=dStr; isNoteMode=false; activeTradeId=null;
+        document.getElementById('noteEditorArea').style.display='none'; document.getElementById('statsArea').style.display='grid';
+        document.getElementById('viewNoteBtn').style.display='block'; document.getElementById('noteAreaControl').style.display='none'; document.getElementById('viewDetailsBtn').style.display='block';
+        const net=dt.reduce((s,t)=>s+t.pl,0), wins=dt.filter(t=>t.pl>0).length;
+        document.getElementById('modalDateTitle').innerText=dStr; document.getElementById('modalNetPL').innerText=`$${net.toFixed(2)}`; document.getElementById('modalNetPL').style.color=net>=0?'var(--green)':'var(--red)';
+        document.getElementById('mStatTrades').innerText=dt.length; document.getElementById('mStatWins').innerText=wins; document.getElementById('mStatGross').innerText=`$${net.toFixed(2)}`; document.getElementById('mStatWR').innerText=`${Math.round(wins/dt.length*100)}%`;
+        document.getElementById('modalTradeTable').innerHTML=dt.map(t=>`<tr class="selectable-trade" onclick="handleRowClick(${t.id},this)"><td>${t.time}</td><td style="font-weight:700;">${t.pair}</td><td style="color:${t.side==='LONG'?'var(--accent)':'#f59e0b'};font-weight:700;">${t.side}</td><td>${t.strategy}</td><td style="color:${t.pl>=0?'var(--green)':'var(--red)'};font-weight:700;">$${t.pl.toFixed(2)}</td></tr>`).join('');
+        renderModalChart(dt); openModal('detailModal');
+    }
+    function renderModalChart(dt) {
+        const ctx=document.getElementById('modalMiniChart').getContext('2d'); if(modalChart) modalChart.destroy();
+        let cur=0,pts=[0]; dt.forEach(t=>{cur+=t.pl;pts.push(cur);});
+        modalChart=new Chart(ctx,{type:'line',data:{labels:pts.map((_,i)=>i),datasets:[{data:pts,borderColor:'#10b981',fill:true,backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+    }
+    function renderMainCharts(cTrades) {
+        const opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+        if(mainCharts.radar) mainCharts.radar.destroy();
+        const wins=cTrades.filter(t=>t.pl>0).length, total=cTrades.length;
+        const wr=total?Math.round(wins/total*100):0;
+        const gp=cTrades.filter(t=>t.pl>0).reduce((s,t)=>s+t.pl,0), gl=Math.abs(cTrades.filter(t=>t.pl<0).reduce((s,t)=>s+t.pl,0));
+        const pf=gl>0?Math.min((gp/gl)*30,100):gp>0?100:0;
+        const aw=wins?gp/wins:0, al=(total-wins)?gl/(total-wins):0, awr=al>0?Math.min((aw/al)*50,100):aw>0?100:0;
+        mainCharts.radar=new Chart(document.getElementById('radarChart'),{type:'radar',data:{labels:['Win %','PF','Avg R:R'],datasets:[{data:[wr,pf,awr],backgroundColor:'rgba(99,102,241,0.2)',borderColor:'#6366f1'}]},options:{...opt,scales:{r:{ticks:{display:false},min:0,max:100}}}});
+        const sorted=[...cTrades].sort((a,b)=>new Date(a.date)-new Date(b.date));
+        let cur=0,pts=[],lbs=[]; sorted.forEach(t=>{cur+=t.pl;pts.push(cur);lbs.push(t.date);});
+        if(mainCharts.line) mainCharts.line.destroy();
+        if(pts.length) mainCharts.line=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:lbs,datasets:[{data:pts,borderColor:'#6366f1',fill:true,backgroundColor:'rgba(99,102,241,0.1)',tension:0.4,pointRadius:0}]},options:opt});
+    }
+
+    // ====================== DAILY JOURNAL ======================
+    function groupTradesByDate(arr) {
+        const g=arr.reduce((acc,t)=>{ if(!acc[t.date])acc[t.date]=[]; acc[t.date].push(t); return acc; },{});
+        return Object.keys(g).sort((a,b)=>new Date(b)-new Date(a)).map(date=>({date,trades:g[date]}));
+    }
+    function renderDailyJournalList() {
+        const container=document.getElementById('journalListItems'); if(!container) return;
+        container.innerHTML='';
+        const grouped=groupTradesByDate(getCurrentTrades());
+        grouped.forEach((group,index)=>{
+            const {date:dateStr, trades:dayTrades}=group;
+            const netPL=dayTrades.reduce((s,t)=>s+t.pl,0);
+            const winners=dayTrades.filter(t=>t.pl>0), losers=dayTrades.filter(t=>t.pl<0);
+            const gp=winners.reduce((s,t)=>s+t.pl,0), gl=Math.abs(losers.reduce((s,t)=>s+t.pl,0));
+            const wr=dayTrades.length?Math.round(winners.length/dayTrades.length*100):0;
+            const pf=gl>0?(gp/gl).toFixed(2):(gp>0?"Minf":"0.00");
+            const fd=new Date(dateStr).toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'2-digit'});
+            container.innerHTML+=`
+            <div class="jnl-card">
+                <div class="jnl-card-header" onclick="toggleJournalAccordion('${dateStr}',this)">
+                    <div class="jnl-header-left">
+                        <span class="jnl-chevron" id="chevron-${dateStr}">❯</span>
+                        <span>${fd}</span>
+                        <span style="color:${netPL>=0?'var(--green)':'var(--red)'};font-size:0.9rem;">Net P&L $${netPL.toFixed(2)}</span>
                     </div>
-                    <div class="jnl-card-body" id="body-${dateStr}">
-                        <div class="jnl-chart-container"><canvas id="chart-${dateStr}"></canvas></div>
-                        <div class="jnl-stats-grid">
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Total Trades</span><span class="jnl-stat-val">${dayTrades.length}</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Winners</span><span class="jnl-stat-val">${winners.length}</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Gross P&L</span><span class="jnl-stat-val" style="color:${netPL>=0?'var(--green)':'var(--red)'}">$${netPL.toFixed(2)}</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Commissions</span><span class="jnl-stat-val">-</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Winrate</span><span class="jnl-stat-val">${wr}%</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Losers</span><span class="jnl-stat-val">${losers.length}</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Volume</span><span class="jnl-stat-val">-</span></div>
-                            <div class="jnl-stat-item"><span class="jnl-stat-label">Profit Factor</span><span class="jnl-stat-val">${pf}</span></div>
-                        </div>
+                    <button class="${dailyNotes[dateStr]?'jnl-btn-view-note':'jnl-btn-add-note'}" onclick="openDailyNoteModal('${dateStr}');event.stopPropagation();">
+                        📝 ${dailyNotes[dateStr]?'View Note':'Add Note'}
+                    </button>
+                </div>
+                <div class="jnl-card-body" id="body-${dateStr}">
+                    <div class="jnl-chart-container"><canvas id="chart-${dateStr}"></canvas></div>
+                    <div class="jnl-stats-grid">
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Total Trades</span><span class="jnl-stat-val">${dayTrades.length}</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Winners</span><span class="jnl-stat-val">${winners.length}</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Gross P&L</span><span class="jnl-stat-val" style="color:${netPL>=0?'var(--green)':'var(--red)'}">$${netPL.toFixed(2)}</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Commissions</span><span class="jnl-stat-val">-</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Winrate</span><span class="jnl-stat-val">${wr}%</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Losers</span><span class="jnl-stat-val">${losers.length}</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Volume</span><span class="jnl-stat-val">-</span></div>
+                        <div class="jnl-stat-item"><span class="jnl-stat-label">Profit Factor</span><span class="jnl-stat-val">${pf}</span></div>
                     </div>
-                </div>`;
-                if(index===0) setTimeout(()=>{ const h=container.querySelector('.jnl-card-header'); toggleJournalAccordion(dateStr,h); },10);
-            });
+                </div>
+            </div>`;
+            if(index===0) setTimeout(()=>{ const h=container.querySelector('.jnl-card-header'); toggleJournalAccordion(dateStr,h); },10);
+        });
+    }
+    function renderJournalMiniChart(dayTrades, canvasId) {
+        const ctx=document.getElementById(canvasId); if(!ctx) return;
+        let cur=0; const plData=[0,...dayTrades.map(t=>{cur+=t.pl;return cur;})];
+        const isWin=cur>=0, color=isWin?'#10b981':'#f43f5e', bg=isWin?'rgba(16,185,129,0.1)':'rgba(244,63,94,0.1)';
+        if(journalMiniCharts[canvasId]) journalMiniCharts[canvasId].destroy();
+        journalMiniCharts[canvasId]=new Chart(ctx.getContext('2d'),{type:'line',data:{labels:plData.map((_,i)=>i),datasets:[{data:plData,borderColor:color,borderWidth:2,fill:true,backgroundColor:bg,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false,beginAtZero:false}}}});
+    }
+    function toggleJournalAccordion(dateStr, headerEl) {
+        const body=document.getElementById(`body-${dateStr}`), chevron=document.getElementById(`chevron-${dateStr}`);
+        const isExpanding=!body.classList.contains('expanded');
+        document.querySelectorAll('.jnl-card-body').forEach(b=>b.classList.remove('expanded'));
+        document.querySelectorAll('.jnl-chevron').forEach(c=>c.classList.remove('expanded'));
+        if(isExpanding){
+            body.classList.add('expanded'); chevron.classList.add('expanded');
+            const canvas=document.getElementById(`chart-${dateStr}`);
+            if(!canvas.getAttribute('data-rendered')){ renderJournalMiniChart(getCurrentTrades().filter(t=>t.date===dateStr),`chart-${dateStr}`); canvas.setAttribute('data-rendered','true'); }
         }
-        let journalMiniCharts={};
-        function renderJournalMiniChart(dayTrades, canvasId) {
-            const ctx=document.getElementById(canvasId).getContext('2d');
-            let cur=0; const plData=[0,...dayTrades.map(t=>{cur+=t.pl;return cur;})];
-            const isWin=cur>=0, color=isWin?'#10b981':'#f43f5e', bg=isWin?'rgba(16,185,129,0.1)':'rgba(244,63,94,0.1)';
-            if(journalMiniCharts[canvasId]) journalMiniCharts[canvasId].destroy();
-            journalMiniCharts[canvasId]=new Chart(ctx,{type:'line',data:{labels:plData.map((_,i)=>i),datasets:[{data:plData,borderColor:color,borderWidth:2,fill:true,backgroundColor:bg,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false,beginAtZero:false}}}});
+    }
+    function openDailyNoteModal(dateStr) {
+        currentJournalNoteDate=dateStr;
+        document.getElementById('dailyNoteDateTitle').innerText=dateStr;
+        document.getElementById('dailyNoteTextarea').value=dailyNotes[dateStr]||"";
+        openModal('dailyNoteModal');
+    }
+    function saveDailyNote() {
+        const txt=document.getElementById('dailyNoteTextarea').value.trim();
+        if(txt) dailyNotes[currentJournalNoteDate]=txt; else delete dailyNotes[currentJournalNoteDate];
+        closeModal('dailyNoteModal');
+        saveToCloud();
+    }
+    function changeJournalMonth(dir) { journalCurrentMonth.setMonth(journalCurrentMonth.getMonth()+dir); renderJournalCalendar(); }
+    function renderJournalCalendar() {
+        const cal=document.getElementById('jnlCalGrid'); if(!cal) return;
+        cal.innerHTML='';
+        ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>cal.innerHTML+=`<div class="jnl-cal-day-label">${d}</div>`);
+        const y=journalCurrentMonth.getFullYear(), m=journalCurrentMonth.getMonth();
+        document.getElementById('jnlCalTitle').innerText=journalCurrentMonth.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+        const fd=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
+        for(let i=0;i<fd;i++) cal.innerHTML+=`<div class="jnl-cal-day empty"></div>`;
+        const cTrades=getCurrentTrades();
+        for(let d=1;d<=dim;d++){
+            const dStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const dt=cTrades.filter(t=>t.date===dStr), sum=dt.reduce((s,t)=>s+t.pl,0);
+            const cls=dt.length?(sum>=0?'jnl-cal-win':'jnl-cal-loss'):'';
+            cal.innerHTML+=`<div class="jnl-cal-day ${cls}" onclick="scrollToJournalDate('${dStr}')">${d}</div>`;
         }
-        function toggleJournalAccordion(dateStr, headerEl) {
-            const body=document.getElementById(`body-${dateStr}`), chevron=document.getElementById(`chevron-${dateStr}`);
-            const isExpanding=!body.classList.contains('expanded');
-            document.querySelectorAll('.jnl-card-body').forEach(b=>b.classList.remove('expanded'));
-            document.querySelectorAll('.jnl-chevron').forEach(c=>c.classList.remove('expanded'));
-            if(isExpanding){
-                body.classList.add('expanded'); chevron.classList.add('expanded');
-                const canvas=document.getElementById(`chart-${dateStr}`);
-                if(!canvas.getAttribute('data-rendered')){ renderJournalMiniChart(getCurrentTrades().filter(t=>t.date===dateStr),`chart-${dateStr}`); canvas.setAttribute('data-rendered','true'); }
-            }
-        }
-        function openDailyNoteModal(dateStr) {
-            currentJournalNoteDate=dateStr;
-            document.getElementById('dailyNoteDateTitle').innerText=dateStr;
-            document.getElementById('dailyNoteTextarea').value=dailyNotes[dateStr]||"";
-            openModal('dailyNoteModal');
-        }
-        function saveDailyNote() {
-            const txt=document.getElementById('dailyNoteTextarea').value.trim();
-            if(txt) dailyNotes[currentJournalNoteDate]=txt; else delete dailyNotes[currentJournalNoteDate];
-            closeModal('dailyNoteModal'); renderDailyJournalList();
-            saveToCloud();
-        }
-        let journalCurrentMonth=new Date();
-        function renderJournalCalendar() {
-            const cal=document.getElementById('jnlCalGrid'); if(!cal) return;
-            cal.innerHTML='';
-            ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>cal.innerHTML+=`<div class="jnl-cal-day-label">${d}</div>`);
-            const y=journalCurrentMonth.getFullYear(), m=journalCurrentMonth.getMonth();
-            document.getElementById('jnlCalTitle').innerText=journalCurrentMonth.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-            const fd=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
-            for(let i=0;i<fd;i++) cal.innerHTML+=`<div class="jnl-cal-day empty"></div>`;
-            const cTrades=getCurrentTrades();
-            for(let d=1;d<=dim;d++){
-                const dStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const dt=cTrades.filter(t=>t.date===dStr), sum=dt.reduce((s,t)=>s+t.pl,0);
-                const cls=dt.length?(sum>=0?'jnl-cal-win':'jnl-cal-loss'):'';
-                cal.innerHTML+=`<div class="jnl-cal-day ${cls}" onclick="scrollToJournalDate('${dStr}')">${d}</div>`;
-            }
-        }
-        function changeJournalMonth(dir) { journalCurrentMonth.setMonth(journalCurrentMonth.getMonth()+dir); renderJournalCalendar(); }
-        function scrollToJournalDate(dateStr) {
-            const chevron=document.getElementById(`chevron-${dateStr}`);
-            if(chevron){ const h=chevron.parentElement.parentElement; h.scrollIntoView({behavior:'smooth',block:'center'}); if(!h.nextElementSibling.classList.contains('expanded')) toggleJournalAccordion(dateStr,h); }
-            else alert(`No trades found for ${dateStr}`);
-        }
-        function renderDailyJournalView() { renderAccountMenu(); renderDailyJournalList(); renderJournalCalendar(); }
+    }
+    function scrollToJournalDate(dateStr) {
+        const chevron=document.getElementById(`chevron-${dateStr}`);
+        if(chevron){ const h=chevron.parentElement.parentElement; h.scrollIntoView({behavior:'smooth',block:'center'}); if(!h.nextElementSibling.classList.contains('expanded')) toggleJournalAccordion(dateStr,h); }
+        else alert(`No trades found for ${dateStr}`);
+    }
+    function renderDailyJournalView() { renderAccountMenu(); renderDailyJournalList(); renderJournalCalendar(); }
 
-        // ====================== PLAYBOOK ======================
-        function openAddRuleModal() {
-            document.getElementById('ruleEditId').value='';
-            document.getElementById('ruleTitle').value='';
-            document.getElementById('ruleDesc').value='';
-            document.getElementById('ruleImg').value='';
-            document.getElementById('ruleModalTitle').innerText='Add Playbook Rule';
-            openModal('addRuleModal');
+    // ====================== PLAYBOOK ======================
+    function openAddRuleModal() {
+        document.getElementById('ruleEditId').value='';
+        document.getElementById('ruleTitle').value='';
+        document.getElementById('ruleDesc').value='';
+        document.getElementById('ruleImg').value='';
+        document.getElementById('ruleModalTitle').innerText='Add Playbook Rule';
+        openModal('addRuleModal');
+    }
+    async function saveRule() {
+        const editId=document.getElementById('ruleEditId').value;
+        const title=document.getElementById('ruleTitle').value.trim();
+        const category=document.getElementById('ruleCategory').value;
+        const desc=document.getElementById('ruleDesc').value.trim();
+        const files=document.getElementById('ruleImg').files;
+        if(!title) return alert("Please enter a rule title.");
+        let imgArr=[];
+        for(let f of files) imgArr.push(await toBase64(f));
+        if(editId){
+            const rule=playbookRules.find(r=>r.id==editId);
+            if(rule){ rule.title=title; rule.category=category; rule.desc=desc; if(imgArr.length) rule.imgs=imgArr; }
+        } else {
+            playbookRules.push({id:Date.now(), title, category, desc, imgs:imgArr});
         }
-        async function saveRule() {
-            const editId=document.getElementById('ruleEditId').value;
-            const title=document.getElementById('ruleTitle').value.trim();
-            const category=document.getElementById('ruleCategory').value;
-            const desc=document.getElementById('ruleDesc').value.trim();
-            const files=document.getElementById('ruleImg').files;
-            if(!title) return alert("Please enter a rule title.");
-            let imgArr=[];
-            for(let f of files) imgArr.push(await toBase64(f));
-            if(editId){
-                const rule=playbookRules.find(r=>r.id==editId);
-                if(rule){ rule.title=title; rule.category=category; rule.desc=desc; if(imgArr.length) rule.imgs=imgArr; }
-            } else {
-                playbookRules.push({id:Date.now(), title, category, desc, imgs:imgArr});
-            }
-            closeModal('addRuleModal'); renderPlaybook();
-            saveToCloud();
-        }
-        function editRule() {
-            const rule=playbookRules.find(r=>r.id===viewingRuleId); if(!rule) return;
+        closeModal('addRuleModal');
+        saveToCloud();
+    }
+    function editRule() {
+        const rule=playbookRules.find(r=>r.id===viewingRuleId); if(!rule) return;
+        closeModal('viewRuleModal');
+        document.getElementById('ruleEditId').value=rule.id;
+        document.getElementById('ruleTitle').value=rule.title;
+        document.getElementById('ruleCategory').value=rule.category;
+        document.getElementById('ruleDesc').value=rule.desc;
+        document.getElementById('ruleImg').value='';
+        document.getElementById('ruleModalTitle').innerText='Edit Playbook Rule';
+        openModal('addRuleModal');
+    }
+    function deleteRule() {
+        if(confirm("Delete this rule? This cannot be undone.")){
+            playbookRules=playbookRules.filter(r=>r.id!==viewingRuleId);
             closeModal('viewRuleModal');
-            document.getElementById('ruleEditId').value=rule.id;
-            document.getElementById('ruleTitle').value=rule.title;
-            document.getElementById('ruleCategory').value=rule.category;
-            document.getElementById('ruleDesc').value=rule.desc;
-            document.getElementById('ruleImg').value='';
-            document.getElementById('ruleModalTitle').innerText='Edit Playbook Rule';
-            openModal('addRuleModal');
+            saveToCloud();
         }
-        function deleteRule() {
-            if(confirm("Delete this rule? This cannot be undone.")){
-                playbookRules=playbookRules.filter(r=>r.id!==viewingRuleId);
-                closeModal('viewRuleModal'); renderPlaybook();
-                saveToCloud();
-            }
-        }
-        function openRuleDetail(id) {
-            const rule=playbookRules.find(r=>r.id===id); if(!rule) return;
-            viewingRuleId=id;
+    }
+    function openRuleDetail(id) {
+        const rule=playbookRules.find(r=>r.id===id); if(!rule) return;
+        viewingRuleId=id;
+        const cat=CAT_COLORS[rule.category]||CAT_COLORS['Setup'];
+        document.getElementById('viewRuleTitle').innerText=rule.title;
+        document.getElementById('viewRuleCategory').innerHTML=`<span style="background:${cat.bg};color:${cat.color};border:1px solid ${cat.border};padding:3px 12px;border-radius:12px;font-size:0.72rem;font-weight:700;">${rule.category}</span>`;
+        document.getElementById('viewRuleDesc').innerText=rule.desc||'No description provided.';
+        document.getElementById('viewRuleImgs').innerHTML=(rule.imgs||[]).map(src=>`<img src="${src}" style="width:100%;border-radius:8px;border:1px solid var(--border);">`).join('');
+        openModal('viewRuleModal');
+    }
+    function filterPlaybook(cat, btn) {
+        pbActiveFilter=cat;
+        document.querySelectorAll('.pb-filter-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPlaybook();
+    }
+    function renderPlaybook() {
+        const list=document.getElementById('playbookList'), empty=document.getElementById('playbookEmpty');
+        const filtered=pbActiveFilter==='All'?playbookRules:playbookRules.filter(r=>r.category===pbActiveFilter);
+        if(!filtered.length){ list.innerHTML=''; empty.style.display='block'; return; }
+        empty.style.display='none';
+        list.innerHTML=filtered.map(rule=>{
             const cat=CAT_COLORS[rule.category]||CAT_COLORS['Setup'];
-            document.getElementById('viewRuleTitle').innerText=rule.title;
-            document.getElementById('viewRuleCategory').innerHTML=`<span style="background:${cat.bg};color:${cat.color};border:1px solid ${cat.border};padding:3px 12px;border-radius:12px;font-size:0.72rem;font-weight:700;">${rule.category}</span>`;
-            document.getElementById('viewRuleDesc').innerText=rule.desc||'No description provided.';
-            document.getElementById('viewRuleImgs').innerHTML=(rule.imgs||[]).map(src=>`<img src="${src}" style="width:100%;border-radius:8px;border:1px solid var(--border);">`).join('');
-            openModal('viewRuleModal');
-        }
-        function filterPlaybook(cat, btn) {
-            pbActiveFilter=cat;
-            document.querySelectorAll('.pb-filter-btn').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            renderPlaybook();
-        }
-        function renderPlaybook() {
-            const list=document.getElementById('playbookList'), empty=document.getElementById('playbookEmpty');
-            const filtered=pbActiveFilter==='All'?playbookRules:playbookRules.filter(r=>r.category===pbActiveFilter);
-            if(!filtered.length){ list.innerHTML=''; empty.style.display='block'; return; }
-            empty.style.display='none';
-            list.innerHTML=filtered.map(rule=>{
-                const cat=CAT_COLORS[rule.category]||CAT_COLORS['Setup'];
-                const thumb=rule.imgs&&rule.imgs.length?`<img src="${rule.imgs[0]}" class="pb-card-thumb" alt="chart">`:'';
-                return `<div class="pb-card" onclick="openRuleDetail(${rule.id})">
-                    ${thumb}
-                    <div class="pb-card-top">
-                        <div class="pb-card-title">${rule.title}</div>
-                        <span class="pb-cat-badge" style="background:${cat.bg};color:${cat.color};border:1px solid ${cat.border};">${rule.category}</span>
-                    </div>
-                    ${rule.desc?`<div class="pb-card-desc">${rule.desc}</div>`:''}
-                    ${rule.imgs&&rule.imgs.length>1?`<div style="font-size:0.7rem;color:var(--text-dim);margin-top:8px;">🖼️ ${rule.imgs.length} images</div>`:''}
-                </div>`;
-            }).join('');
-        }
-
-        // ====================== INIT ======================
-        updateUI();
-    </script>
+            const thumb=rule.imgs&&rule.imgs.length?`<img src="${rule.imgs[0]}" class="pb-card-thumb" alt="chart">`:'';
+            return `<div class="pb-card" onclick="openRuleDetail(${rule.id})">
+                ${thumb}
+                <div class="pb-card-top">
+                    <div class="pb-card-title">${rule.title}</div>
+                    <span class="pb-cat-badge" style="background:${cat.bg};color:${cat.color};border:1px solid ${cat.border};">${rule.category}</span>
+                </div>
+                ${rule.desc?`<div class="pb-card-desc">${rule.desc}</div>`:''}
+                ${rule.imgs&&rule.imgs.length>1?`<div style="font-size:0.7rem;color:var(--text-dim);margin-top:8px;">🖼️ ${rule.imgs.length} images</div>`:''}
+            </div>`;
+        }).join('');
+    }
+</script>
 </body>
 </html>
