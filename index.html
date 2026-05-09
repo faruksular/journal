@@ -696,52 +696,6 @@
         else if (currentView === 'journal') renderDailyJournalView();
         else if (currentView === 'playbook') renderPlaybook();
     }
-    // ====================== YENİ: PAIRS MANAGER (PARİTE YÖNETİCİSİ) ======================
-    window.openPairsManager = function() {
-        toggleAccountMenu();
-        renderPairsList();
-        openModal('pairsManagerModal');
-    };
-    
-    window.addPair = function() {
-        const input = document.getElementById('newPairInput');
-        const val = input.value.trim().toUpperCase();
-        if(val && !userPairs.includes(val)) {
-            userPairs.push(val);
-            input.value = '';
-            renderPairsList();
-            renderPairsDropdown();
-            saveToCloud();
-        }
-    };
-    
-    window.deletePair = function(pair) {
-        userPairs = userPairs.filter(p => p !== pair);
-        renderPairsList();
-        renderPairsDropdown();
-        saveToCloud();
-    };
-    
-    function renderPairsList() {
-        const container = document.getElementById('pairsListContainer');
-        if(!userPairs.length) { container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-dim); text-align:center;">No pairs added yet.</div>'; return; }
-        container.innerHTML = userPairs.map(p => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #e4e6ef; font-size:0.85rem; font-weight:600;">
-                ${p}
-                <button onclick="deletePair('${p}')" style="background:none; border:none; color:var(--red); cursor:pointer;">🗑️</button>
-            </div>
-        `).join('');
-    }
-    
-    function renderPairsDropdown() {
-        const inPair = document.getElementById('inPair');
-        const editPair = document.getElementById('editPair');
-        const options = userPairs.map(p => `<option value="${p}">${p}</option>`).join('');
-        const defaultOpt = userPairs.length ? '' : `<option value="">Add pairs from Settings</option>`;
-        
-        inPair.innerHTML = defaultOpt + options;
-        editPair.innerHTML = defaultOpt + options;
-    }
 
     // ====================== HELPERS ======================
     function getCurrentTrades() { return trades.filter(t => t.accountId === activeAccountId); }
@@ -1320,6 +1274,53 @@
             </div>`;
         }).join('');
     }
+        // ====================== YENİ: PAIRS MANAGER (PARİTE YÖNETİCİSİ) ======================
+    window.openPairsManager = function() {
+        toggleAccountMenu();
+        renderPairsList();
+        openModal('pairsManagerModal');
+    };
+    
+    window.addPair = function() {
+        const input = document.getElementById('newPairInput');
+        const val = input.value.trim().toUpperCase();
+        if(val && !userPairs.includes(val)) {
+            userPairs.push(val);
+            input.value = '';
+            renderPairsList();
+            renderPairsDropdown();
+            saveToCloud();
+        }
+    };
+    
+    window.deletePair = function(pair) {
+        userPairs = userPairs.filter(p => p !== pair);
+        renderPairsList();
+        renderPairsDropdown();
+        saveToCloud();
+    };
+    
+    function renderPairsList() {
+        const container = document.getElementById('pairsListContainer');
+        if(!userPairs.length) { container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-dim); text-align:center;">No pairs added yet.</div>'; return; }
+        container.innerHTML = userPairs.map(p => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px; border-bottom:1px solid #e4e6ef; font-size:0.85rem; font-weight:600;">
+                ${p}
+                <button onclick="deletePair('${p}')" style="background:none; border:none; color:var(--red); cursor:pointer;">🗑️</button>
+            </div>
+        `).join('');
+    }
+    
+    function renderPairsDropdown() {
+        const inPair = document.getElementById('inPair');
+        const editPair = document.getElementById('editPair');
+        const options = userPairs.map(p => `<option value="${p}">${p}</option>`).join('');
+        const defaultOpt = userPairs.length ? '' : `<option value="">Add pairs from Settings</option>`;
+        
+        inPair.innerHTML = defaultOpt + options;
+        editPair.innerHTML = defaultOpt + options;
+    }
+
 </script>
 </body>
 </html>
