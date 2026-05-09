@@ -402,6 +402,8 @@
         </div>
         <input type="number" id="editPL" placeholder="Net P&L ($)">
         <button class="btn-modal" onclick="saveEditedTrade()" style="width:100%; margin-top:10px;">Update Trade</button>
+       <button class="btn-modal" onclick="deleteTrade()" style="width:100%; margin-top:10px; background:var(--red); color:white;">🗑️ Delete Trade</button>
+        
         <button onclick="closeModal('editTradeModal')" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer; color:var(--text-dim);">Cancel</button>
     </div>
 </div>
@@ -900,7 +902,33 @@
         saveToCloud();
         closeModal('editTradeModal');
         if(oldDate===t.date){ showDayDetails(t.date); } else { closeModal('detailModal'); }
-    }
+    }window.deleteTrade = function() {
+        const id = parseInt(document.getElementById('editTradeId').value);
+        if(!id) return;
+        
+        if(confirm("Bu işlemi silmek istediğine emin misin? (Bu işlem geri alınamaz)")) {
+            // Silinecek işlemin tarihini bul (gün detaylarını yenilemek için)
+            const t = trades.find(t => t.id === id);
+            const tradeDate = t ? t.date : null;
+            
+            // İşlemi diziden çıkart
+            trades = trades.filter(t => t.id !== id);
+            
+            // Firebase'e kaydet ve arayüzü yenile
+            saveToCloud();
+            closeModal('editTradeModal');
+            
+            // Eğer sildiğimiz işlemin ait olduğu gün detay ekranı açıksa, o ekranı güncelle
+            if(tradeDate) {
+                const remainingTrades = getCurrentTrades().filter(tr => tr.date === tradeDate);
+                if(remainingTrades.length > 0) {
+                    showDayDetails(tradeDate); // Kalan işlemleri göster
+                } else {
+                    closeModal('detailModal'); // O günün başka işlemi kalmadıysa detay tablosunu da kapat
+                }
+            }
+        }
+    };
     async function addTrade() {
         const date=document.getElementById('inDate').value;
         const pair=document.getElementById('inPair').value.toUpperCase();
