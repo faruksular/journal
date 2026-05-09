@@ -1019,19 +1019,46 @@
         let cur=0,pts=[0]; dt.forEach(t=>{cur+=t.pl;pts.push(cur);});
         modalChart=new Chart(ctx,{type:'line',data:{labels:pts.map((_,i)=>i),datasets:[{data:pts,borderColor:'#10b981',fill:true,backgroundColor:'rgba(16,185,129,0.1)',tension:0.4,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
     }
-    function renderMainCharts(cTrades) {
+   function renderMainCharts(cTrades) {
         const opt={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
         if(mainCharts.radar) mainCharts.radar.destroy();
+        
         const wins=cTrades.filter(t=>t.pl>0).length, total=cTrades.length;
         const wr=total?Math.round(wins/total*100):0;
         const gp=cTrades.filter(t=>t.pl>0).reduce((s,t)=>s+t.pl,0), gl=Math.abs(cTrades.filter(t=>t.pl<0).reduce((s,t)=>s+t.pl,0));
         const pf=gl>0?Math.min((gp/gl)*30,100):gp>0?100:0;
         const aw=wins?gp/wins:0, al=(total-wins)?gl/(total-wins):0, awr=al>0?Math.min((aw/al)*50,100):aw>0?100:0;
-        mainCharts.radar=new Chart(document.getElementById('radarChart'),{type:'radar',data:{labels:['Win %','PF','Avg R:R'],datasets:[{data:[wr,pf,awr],backgroundColor:'rgba(99,102,241,0.2)',borderColor:'#6366f1'}]},options:{...opt,scales:{r:{ticks:{display:false},min:0,max:100}}}});
+        
+        mainCharts.radar=new Chart(document.getElementById('radarChart'),{
+            type:'radar',
+            data:{labels:['Win %','PF','Avg R:R'],datasets:[{data:[wr,pf,awr],backgroundColor:'rgba(99,102,241,0.2)',borderColor:'#6366f1'}]},
+            options:{...opt,scales:{r:{ticks:{display:false},min:0,max:100}}}
+        });
+
+        // GRAFİĞİN SERMAYEDEN BAŞLAMASINI SAĞLAYAN YENİ KISIM
+        const acc = getActiveAccount();
+        const startBalance = acc ? acc.balance : 0;
+        
         const sorted=[...cTrades].sort((a,b)=>new Date(a.date)-new Date(b.date));
-        let cur=0,pts=[],lbs=[]; sorted.forEach(t=>{cur+=t.pl;pts.push(cur);lbs.push(t.date);});
+        let cur = startBalance; 
+        let pts = [startBalance]; 
+        let lbs = ['Start']; 
+        
+        sorted.forEach(t=>{
+            cur += t.pl; 
+            pts.push(cur); 
+            lbs.push(t.date);
+        });
+
         if(mainCharts.line) mainCharts.line.destroy();
-        if(pts.length) mainCharts.line=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:lbs,datasets:[{data:pts,borderColor:'#6366f1',fill:true,backgroundColor:'rgba(99,102,241,0.1)',tension:0.4,pointRadius:0}]},options:opt});
+        // Eğer en az 1 işlem varsa veya sadece başlangıç bakiyesi varsa çiz
+        if(pts.length > 0) {
+            mainCharts.line=new Chart(document.getElementById('lineChart'),{
+                type:'line',
+                data:{labels:lbs,datasets:[{data:pts,borderColor:'#6366f1',fill:true,backgroundColor:'rgba(99,102,241,0.1)',tension:0.4,pointRadius:0}]},
+                options: opt
+            });
+        }
     }
 
     // ====================== DAILY JOURNAL ======================
