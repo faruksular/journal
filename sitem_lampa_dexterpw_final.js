@@ -23,7 +23,7 @@
   var CONFIG = {
     id: 'sitem',                                          // boşluksuz, küçük harf
     name: 'Sitem',                                        // butonda görünen ad
-    tmdbKey: '',                                          // gerekirse TMDB API anahtarı; normal TMDB ID'lerinde gerekmez
+    tmdbKey: 'd5b5707015b22f116ddf1258cf41f10a',                                          // gerekirse TMDB API anahtarı; normal TMDB ID'lerinde gerekmez
     timeout: 20000                                        // en çok bekleme süresi (ms)
   };
   // ====================================================
