@@ -227,7 +227,7 @@
         if (name === 'anilibria') return user_proxy2;
         if (name === 'anilibria2') return user_proxy1;
         if (name === 'animelib') return proxy_secret;
-        if (name === 'kodik') return user_proxy1;
+        if (name === 'kodik') return proxy_other && !proxy_other_url && proxy_secret_ip || user_pro
         if (name === 'trkaynak') return user_proxy1;
         if (name === 'kinopub') return user_proxy2;
       }
