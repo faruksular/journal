@@ -13990,34 +13990,61 @@
       return trPrefix(headers) + url;
     }
 
-    function trFetch(url, opts) {
-      var host = trHost(url);
-      var via = trUsesProxy(url);
-      var target = url;
-      var init = opts || {};
-      if (via) {
-        target = trPrefix(init.headers) + url;
-        init = Object.assign({}, init);
-        delete init.headers; // başlıklar adrese taşındı, ön kontrol (preflight) gerekmez
-      }
-      return window.fetch(target, init).then(function (r) {
-        if (!r.ok && !tr_last_error) tr_last_error = 'HTTP ' + r.status + ' (' + host + ')';
-        if (!via) return r;
-        // Provider response.url'ye bakıyor; proxy adresi yerine asıl adresi bildir
-        return {
-          ok: r.ok,
-          status: r.status,
-          url: url,
-          headers: r.headers,
-          text: function () { return r.text(); },
-          json: function () { return r.json(); }
-        };
-      }, function (e) {
-        if (!tr_last_error) tr_last_error = ((e && e.message) || 'ağ hatası') + ' (' + host + ')';
-        throw e;
-      });
+   function trFetch(url, opts) {
+  var host = trHost(url);
+  var proxyUrl = trProxy();
+  var via = !!proxyUrl && TR_DIRECT.indexOf(host) === -1;
+  var target = url;
+  var init = opts || {};
+
+  if (via) {
+    target = trPrefix(init.headers) + url;
+    init = Object.assign({}, init);
+    delete init.headers;
+  }
+
+  return window.fetch(target, init).then(function (r) {
+    if (!r.ok && !tr_last_error) {
+      tr_last_error = 'HTTP ' + r.status +
+        ' (' + host + ')' +
+        (via ? ' | Proxy: ' + trHost(proxyUrl) : ' | Doğrudan bağlantı');
     }
 
+    if (!via) return r;
+
+    return {
+      ok: r.ok,
+      status: r.status,
+      url: url,
+      headers: r.headers,
+      text: function () { return r.text(); },
+      json: function () { return r.json(); }
+    };
+
+  }, function (e) {
+    if (!tr_last_error) {
+      var reason = (e && e.message) || 'Bilinmeyen ağ hatası';
+
+      if (via) {
+        tr_last_error =
+          'PROXY BAĞLANTI HATASI: ' +
+          trHost(proxyUrl) + ' → ' + host +
+          ' | ' + reason +
+          '. Proxy erişimi, proxy CORS veya ağ bağlantısı sorunu olabilir.';
+      } else {
+        tr_last_error =
+          'DOĞRUDAN ERİŞİM HATASI: ' +
+          host +
+          ' | ' + reason +
+          '. CORS, DNS, TLS veya bölgesel erişim engeli olabilir.';
+      }
+    }
+
+    throw e;
+  });
+}
+
+    
     // Provider crypto-js ister (Nuvio hazır verir); cdnjs'ten sabit sürümle yüklenir
     function trEnsureCrypto() {
       if (tr_crypto) return tr_crypto;
